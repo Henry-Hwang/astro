@@ -69,7 +69,8 @@ return {
       -- sort.trim_buffer()
         -- sort.populateQuickfix()
         -- sort.showFileList()
-        sort.showBufferList()
+        -- sort.showBufferList()
+        sort.popup_buffers()
       end,
       desc = "Sort trim buffer"
     },

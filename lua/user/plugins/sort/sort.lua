@@ -285,22 +285,67 @@ function sort.popup_input()
   end)
 end
 
+function sort_buffers_by_recent_use(buffers)
+
+
+    -- switching buffers and opening 'buffers' in quick succession
+    -- can lead to incorrect sort as 'lastused' isn't updated fast
+    -- enough (neovim bug?), this makes sure the current buffer is
+    -- always on top (#646)
+    -- Hopefully this gets solved before the year 2100
+    -- DON'T FORCE ME TO UPDATE THIS HACK NEOVIM LOL
+    local future = os.time({ year = 2100, month = 1, day = 1, hour = 0, minute = 00 })
+    local get_unixtime = function(buf)
+      if buf.flag == "%" then
+        return future
+      elseif buf.flag == "#" then
+        return future - 1
+      else
+        return buf.info.lastused
+      end
+    end
+    table.sort(buffers, function(a, b)
+      return get_unixtime(a) > get_unixtime(b)
+    end)
+  return buffers
+end
+
+function sym_buffer(buf)
+  local alt_buf = vim.fn.bufnr("#")
+  local cur_buf = vim.fn.bufnr("%")
+  local arg_buf = vim.fn.bufnr("a")
+  local buf_list_buf = vim.fn.bufnr("b")
+  local last_buf = vim.fn.bufnr("l")
+  local last_accessed_buf = vim.fn.bufnr("s")
+  print("Alternate Buffer:", alt_buf)
+  print("Current Buffer:", cur_buf)
+  print("Argument List Buffer:", arg_buf)
+  print("Buffer List Buffer:", buf_list_buf)
+  print("Last Buffer:", last_buf)
+  print("Last Accessed Buffer:", last_accessed_buf)
+  print("Current Buffer--:", buf)
+
+  if buf == alt_buf then
+    return "#"
+  elseif buf == current then
+    return "%"
+  elseif buf == arg_buf then
+    return "a"
+  elseif buf == last_buf then
+    return "l"
+  elseif buf == last_accessed_buf then
+    return "s"
+  end
+  return " "
+end
+
 function sort.popup_buffers()
   local Popup = require("nui.popup")
   local event = require("nui.utils.autocmd").event
   local buffers = vim.api.nvim_list_bufs()
   local buffer_list = {}
+  local buffer_show = {}
 
-  for _, buf in ipairs(buffers) do
-    local path = vim.api.nvim_buf_get_name(buf)
-    path = string.gsub(path, "^%s*(.-)%s*$", "%1")
-    if path ~= "" then
-      local base = vim.fn.fnamemodify(path, ':t')
-      local dir = vim.fn.fnamemodify(path, ':h')
-      local info = buf .. ": " .. base .. ": " .. dir
-      table.insert(buffer_list, info)
-    end
-  end
 
   local popup = Popup({
     enter = true,
@@ -323,6 +368,42 @@ function sort.popup_buffers()
     popup:unmount()
   end)
 
+  for _, buf in ipairs(buffers) do
+    local path = vim.api.nvim_buf_get_name(buf)
+    path = string.gsub(path, "^%s*(.-)%s*$", "%1")
+    if path ~= "" then
+      table.insert(buffer_list, buf)
+    end
+  end
+  -- Sort the buffer list by most recent use
+  table.sort(buffer_list, function(a, b)
+    local a_last_used = vim.api.nvim_buf_get_var(a, "open_timestamp")
+    local b_last_used = vim.api.nvim_buf_get_var(b, "open_timestamp")
+    return tonumber(a_last_used) > tonumber(b_last_used)
+  end)
+
+  if #buffer_list > 1 then
+    table.remove(buffer_list, 1)
+  end
+
+  for _, buf in ipairs(buffer_list) do
+    local path = vim.api.nvim_buf_get_name(buf)
+    path = string.gsub(path, "^%s*(.-)%s*$", "%1")
+    if path ~= "" then
+      local base = vim.fn.fnamemodify(path, ':t')
+      local dir = vim.fn.fnamemodify(path, ':h')
+      local modified = ' '
+      if 1 == vim.fn.getbufvar(buf, "&modified") then
+        modified = '*'
+      end
+      -- local symbol = sym_buffer(buf)
+      -- local time = vim.api.nvim_buf_get_var(buf, "open_timestamp")
+      -- local info = buf.. ":" .. symbol .. ": " .. modified .. ": " .. base .. ": " .. dir
+      local info = string.format("%2d: %s: %s: %s", buf, modified, base, dir)
+      table.insert(buffer_show, info)
+    end
+  end
+
   local ok = popup:map("n", "<cr>", function(bufnr)
     local cursor_pos = vim.api.nvim_win_get_cursor(0)
     local line_number = cursor_pos[1]
@@ -338,19 +419,10 @@ function sort.popup_buffers()
 
     print("Enter pressed in Normal mode! " .. buffer_id)
     vim.api.nvim_set_current_buf(tonumber(buffer_id))
-    -- set_buffer_as_top_window(tonumber(buffer_id))
+    -- vim.cmd(":b " .. buffer_id)
   end, { noremap = true })
-  -- Set autocommand to close the window when leaving the buffer
-  -- vim.cmd("autocmd BufLeave <buffer> :call nvim_win_close(" .. winnr .. ", v:true)")
-
-  -- Set key mapping to jump to the selected buffer
-  -- vim.api.nvim_buf_set_keymap(bufnr, 'n', '<CR>', ":lua jumpToBuffer(" .. winnr .. ")<CR>", {
-  --   silent = true,
-  --   noremap = true
-  -- })
   -- set content
-  -- vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, { "Hello World" })
-    vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, buffer_list)
+  vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, buffer_show)
 end
 
 return sort
