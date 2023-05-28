@@ -339,6 +339,32 @@ function sym_buffer(buf)
   return " "
 end
 
+
+function format_buf_string(bufnr, path)
+  local base = vim.fn.fnamemodify(path, ':t')
+  local dir = vim.fn.fnamemodify(path, ':h')
+
+  if 1 == vim.fn.getbufvar(bufnr, "&modified") then
+    return string.format("%2d: %s + .. %s", bufnr, base, dir)
+  else
+    return string.format("%2d: %s   .. %s", bufnr, base, dir)
+  end
+end
+
+function retrieve_buffer_id_from_cursor_line()
+    local cursor_pos = vim.api.nvim_win_get_cursor(0)
+    local line_number = cursor_pos[1]
+    local buffer_info = vim.api.nvim_buf_get_lines(0, line_number - 1, line_number, false)[1]
+    local separator_pos = string.find(buffer_info, ":")
+    local buffer_id = 1
+    if separator_pos then
+      buffer_id = string.sub(buffer_info, 1, separator_pos - 1)
+      -- local buffer_name = string.sub(buffer_info, separator_pos + 2)
+    end
+
+  return buffer_id
+end
+
 function sort.popup_buffers()
   local Popup = require("nui.popup")
   local event = require("nui.utils.autocmd").event
@@ -390,39 +416,21 @@ function sort.popup_buffers()
     local path = vim.api.nvim_buf_get_name(buf)
     path = string.gsub(path, "^%s*(.-)%s*$", "%1")
     if path ~= "" then
-      local base = vim.fn.fnamemodify(path, ':t')
-      local dir = vim.fn.fnamemodify(path, ':h')
-      local modified = ' '
-      if 1 == vim.fn.getbufvar(buf, "&modified") then
-        modified = '*'
-      end
-      -- local symbol = sym_buffer(buf)
-      -- local time = vim.api.nvim_buf_get_var(buf, "open_timestamp")
-      -- local info = buf.. ":" .. symbol .. ": " .. modified .. ": " .. base .. ": " .. dir
-      local info = string.format("%2d: %s: %s: %s", buf, modified, base, dir)
+      local info = format_buf_string(buf, path)
       table.insert(buffer_show, info)
     end
   end
 
   local ok = popup:map("n", "<cr>", function(bufnr)
-    local cursor_pos = vim.api.nvim_win_get_cursor(0)
-    local line_number = cursor_pos[1]
-    local buffer_info = vim.api.nvim_buf_get_lines(0, line_number - 1, line_number, false)[1]
-
-    local separator_pos = string.find(buffer_info, ":")
-    local buffer_id = 1
-    if separator_pos then
-      buffer_id = string.sub(buffer_info, 1, separator_pos - 1)
-      local buffer_name = string.sub(buffer_info, separator_pos + 2)
-      -- return buffer_id, buffer_name
-    end
-
-    print("Enter pressed in Normal mode! " .. buffer_id)
+    local buffer_id = retrieve_buffer_id_from_cursor_line()
     vim.api.nvim_set_current_buf(tonumber(buffer_id))
     -- vim.cmd(":b " .. buffer_id)
   end, { noremap = true })
   -- set content
   vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, buffer_show)
+
+  vim.bo[popup.bufnr].modifiable = false
+  vim.bo[popup.bufnr].readonly = true
 end
 
 return sort

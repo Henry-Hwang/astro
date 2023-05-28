@@ -24,13 +24,19 @@ return {
     ["<leader>r"] = { ":%s/<C-r><C-w>/<C-r><C-w>/gc", desc = "Replace word" },
     ["ff"] = { "/<C-r><C-w>", desc = "Search word"},
     ["<C-s>"] = { ":let @a='' <bar> g/<C-r><C-w>/yank A", desc = "Handle lines with [PATTEN] " },
-    ["<C-a>"] = { "<cmd>Neotree buffers position=float<cr>", desc = "Show buffers" },  -- change description but the same command
+    -- ["<C-a>"] = { "<cmd>Neotree buffers position=float<cr>", desc = "Show buffers" },  -- change description but the same command
     ["<C-f>"] = { "<cmd>Telescope find_files<cr>", desc = "Find files" },  -- change description but the same command
     ["<C-e>"] = { "<cmd>Neotree filesystem dir=%:h float<cr>", desc = "Path to file" },  -- change description but the same command
     -- ["<Leader>y"] = { "\"+y", desc = "Copy to system clipboard(+)"},
     ["<Leader>yy"] = {":<C-u>execute 'normal! ' . v:count1 . 'yy' | let @+ = @0<cr>", desc = "Copy to system clipboard" },
     ["<Leader>p"] = { ":put +<cr>", desc = "Paste from register(+)" },
     -- ["<Leader>,"] = { "<cmd>tcd %:h<cr>", desc = "Tcd to current directly" },
+    ["<C-a>"] = {
+      function ()
+        sort.popup_buffers()
+      end,
+      desc = "Sort list buffer"
+    },
 	  ["<Leader>,"] = { 
 	    function ()
 		    if system == "Windows_NT" then
