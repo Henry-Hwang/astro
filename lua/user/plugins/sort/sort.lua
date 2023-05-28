@@ -246,5 +246,112 @@ end
 
 -- Command to trigger the plugin
 -- vim.cmd("command! -nargs=0 BufferList lua showBufferList()")
+function sort.popup_input()
+  local Input = require("nui.input")
+  local event = require("nui.utils.autocmd").event
+
+  local input = Input({
+    position = "50%",
+    size = {
+      width = 20,
+    },
+    border = {
+      style = "single",
+      text = {
+        top = "[Howdy?]",
+        top_align = "center",
+      },
+    },
+    win_options = {
+      winhighlight = "Normal:Normal,FloatBorder:Normal",
+    },
+  }, {
+      prompt = "> ",
+      default_value = "Hello",
+      on_close = function()
+        print("Input Closed!")
+      end,
+      on_submit = function(value)
+        print("Input Submitted: " .. value)
+      end,
+    })
+
+  -- mount/open the component
+  input:mount()
+
+  -- unmount component when cursor leaves buffer
+  input:on(event.BufLeave, function()
+    input:unmount()
+  end)
+end
+
+function sort.popup_buffers()
+  local Popup = require("nui.popup")
+  local event = require("nui.utils.autocmd").event
+  local buffers = vim.api.nvim_list_bufs()
+  local buffer_list = {}
+
+  for _, buf in ipairs(buffers) do
+    local path = vim.api.nvim_buf_get_name(buf)
+    path = string.gsub(path, "^%s*(.-)%s*$", "%1")
+    if path ~= "" then
+      local base = vim.fn.fnamemodify(path, ':t')
+      local dir = vim.fn.fnamemodify(path, ':h')
+      local info = buf .. ": " .. base .. ": " .. dir
+      table.insert(buffer_list, info)
+    end
+  end
+
+  local popup = Popup({
+    enter = true,
+    focusable = true,
+    border = {
+      style = "rounded",
+    },
+    position = "50%",
+    size = {
+      width = "80%",
+      height = "60%",
+    },
+  })
+
+  -- mount/open the component
+  popup:mount()
+
+  -- unmount component when cursor leaves buffer
+  popup:on(event.BufLeave, function()
+    popup:unmount()
+  end)
+
+  local ok = popup:map("n", "<cr>", function(bufnr)
+    local cursor_pos = vim.api.nvim_win_get_cursor(0)
+    local line_number = cursor_pos[1]
+    local buffer_info = vim.api.nvim_buf_get_lines(0, line_number - 1, line_number, false)[1]
+
+    local separator_pos = string.find(buffer_info, ":")
+    local buffer_id = 1
+    if separator_pos then
+      buffer_id = string.sub(buffer_info, 1, separator_pos - 1)
+      local buffer_name = string.sub(buffer_info, separator_pos + 2)
+      -- return buffer_id, buffer_name
+    end
+
+    print("Enter pressed in Normal mode! " .. buffer_id)
+    vim.api.nvim_set_current_buf(tonumber(buffer_id))
+    -- set_buffer_as_top_window(tonumber(buffer_id))
+  end, { noremap = true })
+  -- Set autocommand to close the window when leaving the buffer
+  -- vim.cmd("autocmd BufLeave <buffer> :call nvim_win_close(" .. winnr .. ", v:true)")
+
+  -- Set key mapping to jump to the selected buffer
+  -- vim.api.nvim_buf_set_keymap(bufnr, 'n', '<CR>', ":lua jumpToBuffer(" .. winnr .. ")<CR>", {
+  --   silent = true,
+  --   noremap = true
+  -- })
+  -- set content
+  -- vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, { "Hello World" })
+    vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, buffer_list)
+end
+
 return sort
 
