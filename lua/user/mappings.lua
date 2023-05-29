@@ -19,7 +19,6 @@ return {
       desc = "Pick to close",
     },
     -- tables with the `name` key will be registered with which-key if it's installed
-    -- thiswith:  is useful for naming menus
     ["<leader>b"] = { name = "Buffers" },
     ["<leader>r"] = { ":%s/<C-r><C-w>/<C-r><C-w>/gc", desc = "Replace word" },
     ["ff"] = { "/<C-r><C-w>", desc = "Search word"},
@@ -30,6 +29,7 @@ return {
     -- ["<Leader>y"] = { "\"+y", desc = "Copy to system clipboard(+)"},
     ["<Leader>yy"] = {":<C-u>execute 'normal! ' . v:count1 . 'yy' | let @+ = @0<cr>", desc = "Copy to system clipboard" },
     ["<Leader>p"] = { ":put +<cr>", desc = "Paste from register(+)" },
+    ["<Leader>W"] = { ":wa!<cr>", desc = "Write all force" },
     -- ["<Leader>,"] = { "<cmd>tcd %:h<cr>", desc = "Tcd to current directly" },
     ["<C-a>"] = {
       function ()
