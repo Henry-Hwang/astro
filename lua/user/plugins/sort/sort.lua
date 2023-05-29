@@ -1,23 +1,8 @@
 local sort = {}
-local buffer = require "buffer"
+local buffer = require "user.plugins.sort.buffer"
 
 function sort.trim_buffer()
-  local bufnr = vim.api.nvim_get_current_buf()
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local new_lines = {}
-
-  for _, line in ipairs(lines) do
-    -- Trim leading and trailing whitespace
-    local trimmed_line = string.gsub(line, "^%s*(.-)%s*$", "%1")
-
-    -- Only add non-blank lines to the new_lines table
-    if trimmed_line ~= "" then
-      table.insert(new_lines, trimmed_line)
-    end
-  end
-
-  -- Replace the buffer contents with the trimmed lines
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
+  buffer.trim()
 end
 
 function sort.regex_keep_match(pattern)
@@ -125,10 +110,10 @@ end
 
 function sort.regex_buf_quickfix(pattern)
   local lines = {}
-  local buffer = vim.api.nvim_get_current_buf()
+  local bufnr = vim.api.nvim_get_current_buf()
   local regex = vim.regex(pattern)
 
-  buffer_lines = vim.api.nvim_buf_get_lines(buffer, 0, -1, false)
+  buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   -- Iterate over each line in the buffer
   for line_number, line_text in ipairs(buffer_lines) do
     -- Check if the line contains the pattern "sample"
@@ -136,7 +121,7 @@ function sort.regex_buf_quickfix(pattern)
     if regex:match_str(line_text) then
       -- Create a table representing the quickfix entry and add it to the lines table
       table.insert(lines, {
-        filename = vim.api.nvim_buf_get_name(buffer),
+        filename = vim.api.nvim_buf_get_name(bufnr),
         lnum = line_number,
         text = line_text
       })
@@ -153,14 +138,14 @@ end
 
 function sort.find_buf_quickfix(word)
   local lines = {}
-  local buffer = vim.api.nvim_get_current_buf()
+  local bufnr = vim.api.nvim_get_current_buf()
 
   -- Iterate over each line in the buffer
-  for line_number, line_text in ipairs(vim.api.nvim_buf_get_lines(buffer, 0, -1, false)) do
+  for line_number, line_text in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
     if string.find(line_text, word) then
       -- Create a table representing the quickfix entry and add it to the lines table
       table.insert(lines, {
-        filename = vim.api.nvim_buf_get_name(buffer),
+        filename = vim.api.nvim_buf_get_name(bufnr),
         lnum = line_number,
         text = line_text
       })
@@ -230,7 +215,7 @@ function sort.showFileList1()
 end
 
 -- Function to create a floating window and show file names in current directory
-function sort.popup_input(pattern, path)
+function sort.popup_search(pattern, path)
   local Input = require("nui.input")
   local event = require("nui.utils.autocmd").event
 

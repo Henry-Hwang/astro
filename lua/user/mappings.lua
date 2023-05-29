@@ -59,13 +59,27 @@ return {
       end,
       desc = "Regex patten in buffer"
     },
-    ["<leader>,s"] = {
+    ["<leader>,f"] = {
       function ()
         -- local pattern = vim.fn.expand("<cword>")
         local path = vim.fn.expand("%:h")
         sort.search_path_files(path, "pattern")
       end,
       desc = "Search files in current path"
+    },
+    ["<leader>,s"] = {
+      function ()
+        local pattern = vim.fn.expand("<cword>")
+        local path = vim.fn.expand("%:h")
+        sort.popup_search(pattern, path)
+      end,
+      desc = "Search WORD on popup"
+    },
+    ["<leader>,k"] = {
+      function ()
+        sort.trim_buffer()
+      end,
+      desc = "Trim buffer"
     },
 	  ["<Leader>,u"] = { 
 	    function ()
@@ -109,7 +123,7 @@ return {
         -- sort.trim_buffer()
         -- sort.regex_buf_quickfix(pattern)
         -- sort.fzf_quickfix()
-        sort.popup_input(pattern, path)
+        sort.popup_search(pattern, path)
       end,
       desc = "Sort trim buffer"
     },
