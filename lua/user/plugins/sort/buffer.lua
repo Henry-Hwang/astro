@@ -46,8 +46,10 @@ function buffer.enumerate_and_sort()
     return ainfo.lastused > binfo.lastused
   end)
 
-  local alt = table.remove(buffer_list, vim.fn.bufnr("#"))
-  table.insert(buffer_list, alt)
+  if #buffer_list > 1 then
+    -- Move the first to last
+    table.insert(buffer_list, table.remove(buffer_list, 1))
+  end
 
   for _, buf in ipairs(buffer_list) do
     local path = vim.api.nvim_buf_get_name(buf)

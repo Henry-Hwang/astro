@@ -93,16 +93,12 @@ return {
     --     ["~/%.config/foo/.*"] = "fooscript",
     --   },
     -- }
-    vim.api.nvim_create_autocmd({"BufWinLeave"}, {
-      pattern = {"*.*"},
-      callback = function(ev)
-        -- print(string.format('event fired: s', vim.inspect(ev)))
-        vim.api.nvim_buf_set_var(0, "open_timestamp", os.time())
-        local pos = vim.api.nvim_win_get_cursor(0)
-        vim.api.nvim_buf_set_var(0, "pos_row", pos[1])
-        vim.api.nvim_buf_set_var(0, "pos_col", pos[2])
-      end
-    })
+    -- vim.api.nvim_create_autocmd({"BufWinLeave"}, {
+    --   pattern = {"*.*"},
+    --   callback = function(ev)
+    --     vim.api.nvim_buf_set_var(0, "open_timestamp", os.time())
+    --   end
+    -- })
     vim.api.nvim_create_autocmd({ "BufWinEnter"}, { 
         pattern = { "*.*" },
         command = "stopinsert"
