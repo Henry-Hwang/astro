@@ -1,8 +1,13 @@
 local sort = {}
 local buffer = require "user.plugins.sort.buffer"
+local window = require "user.plugins.sort.window"
 
 function sort.trim_buffer()
   buffer.trim()
+end
+
+function sort.toggle_quickfix()
+  window.toggle_quickfix()
 end
 
 function sort.regex_keep_match(pattern)
@@ -137,23 +142,9 @@ end
 
 
 function sort.find_buf_quickfix(word)
-  local lines = {}
-  local bufnr = vim.api.nvim_get_current_buf()
-
-  -- Iterate over each line in the buffer
-  for line_number, line_text in ipairs(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)) do
-    if string.find(line_text, word) then
-      -- Create a table representing the quickfix entry and add it to the lines table
-      table.insert(lines, {
-        filename = vim.api.nvim_buf_get_name(bufnr),
-        lnum = line_number,
-        text = line_text
-      })
-    end
-  end
-
+  local qfix_lines = buffer.match_lines_to_quickfix_list(word)
   -- Set the lines in the quickfix list
-  vim.fn.setqflist(lines)
+  vim.fn.setqflist(qfix_lines)
 
   -- vim.cmd("cwindow")
   vim.cmd("copen")
@@ -222,12 +213,12 @@ function sort.popup_search(pattern, path)
   local input = Input({
     position = "50%",
     size = {
-      width = 20,
+      width = 60,
     },
     border = {
       style = "single",
       text = {
-        top = "[Search..]",
+        top = "[Search]",
         top_align = "center",
       },
     },

@@ -37,6 +37,10 @@ return {
       end,
       desc = "List buffer sorted"
     },
+    ["<leader>q"] = {
+      function () sort.toggle_quickfix() end,
+      desc = "Toggle Quickfix"
+    },
     ["<leader>,g"] = {
       function ()
         local pattern = vim.fn.expand("<cword>")
@@ -125,7 +129,7 @@ return {
         -- sort.fzf_quickfix()
         sort.popup_search(pattern, path)
       end,
-      desc = "Sort trim buffer"
+      desc = "Test block"
     },
     ["<leader>;o"] = {
       function ()

@@ -84,4 +84,22 @@ end
   return buffer_show
 end
 
+function buffer.match_lines_to_quickfix_list(word)
+  local qfix_lines = {}
+  local bufnr = vim.api.nvim_get_current_buf()
+  local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  -- Iterate over each line in the buffer
+  for line_number, line_text in ipairs(buffer_lines) do
+    if string.find(line_text, word) then
+      -- Create a table representing the quickfix entry and add it to the lines table
+      table.insert(qfix_lines, {
+        filename = vim.api.nvim_buf_get_name(bufnr),
+        lnum = line_number,
+        text = line_text
+      })
+    end
+  end
+  return qfix_lines
+end
+
 return buffer
