@@ -100,7 +100,7 @@ return {
       end,
       desc = "Sort delete lines"
     },
-    ["<leader>;t"] = {
+    ["<leader>;;"] = {
       function ()
         local pattern = vim.fn.expand("<cword>")
         local path = vim.fn.expand("%:h")
@@ -109,8 +109,7 @@ return {
         -- sort.trim_buffer()
         -- sort.regex_buf_quickfix(pattern)
         -- sort.fzf_quickfix()
-        sort.search_path_files(path, pattern)
-        sort.grep_path_quickfix(pattern, path)
+        sort.popup_input(pattern, path)
       end,
       desc = "Sort trim buffer"
     },

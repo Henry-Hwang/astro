@@ -229,7 +229,7 @@ function sort.showFileList1()
 end
 
 -- Function to create a floating window and show file names in current directory
-function sort.popup_input()
+function sort.popup_input(pattern, path)
   local Input = require("nui.input")
   local event = require("nui.utils.autocmd").event
 
@@ -241,7 +241,7 @@ function sort.popup_input()
     border = {
       style = "single",
       text = {
-        top = "[Howdy?]",
+        top = "[Search..]",
         top_align = "center",
       },
     },
@@ -250,7 +250,7 @@ function sort.popup_input()
     },
   }, {
       prompt = "> ",
-      default_value = "Hello",
+      default_value = pattern,
       on_close = function()
         print("Input Closed!")
       end,
@@ -331,8 +331,14 @@ function sort.popup_buffers()
   end
   -- Sort the buffer list by most recent use
   table.sort(buffer_list, function(a, b)
-    local a_last_used = vim.api.nvim_buf_get_var(a, "open_timestamp")
-    local b_last_used = vim.api.nvim_buf_get_var(b, "open_timestamp")
+    local success, a_last_used = pcall(vim.api.nvim_buf_get_var, a, "open_timestamp")
+    if not success then
+      a_last_used = 0
+    end
+    local success, b_last_used = pcall(vim.api.nvim_buf_get_var, b, "open_timestamp")
+    if not success then
+      b_last_used = 0
+    end
     return tonumber(a_last_used) > tonumber(b_last_used)
   end)
 
