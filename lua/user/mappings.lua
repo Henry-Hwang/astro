@@ -35,9 +35,39 @@ return {
       function ()
         sort.popup_buffers()
       end,
-      desc = "Sort list buffer"
+      desc = "List buffer sorted"
     },
-	  ["<Leader>,"] = { 
+    ["<leader>,g"] = {
+      function ()
+        local pattern = vim.fn.expand("<cword>")
+        local path = vim.fn.expand("%:h")
+        sort.grep_path_quickfix(pattern, path)
+      end,
+      desc = "Grep WORD in path"
+    },
+    ["<leader>,l"] = {
+      function ()
+        local pattern = vim.fn.expand("<cword>")
+        sort.find_buf_quickfix(pattern)
+      end,
+      desc = "Find WORD in buffer"
+    },
+    ["<leader>,r"] = {
+      function ()
+        local pattern = vim.fn.input("regular expression: ")
+        sort.regex_buf_quickfix(pattern)
+      end,
+      desc = "Regex patten in buffer"
+    },
+    ["<leader>,s"] = {
+      function ()
+        -- local pattern = vim.fn.expand("<cword>")
+        local path = vim.fn.expand("%:h")
+        sort.search_path_files(path, "pattern")
+      end,
+      desc = "Search files in current path"
+    },
+	  ["<Leader>,u"] = { 
 	    function ()
 		    if system == "Windows_NT" then
 			    userdir = vim.fn.getenv("LOCALAPPDATA") .. "/nvim/lua/user"
@@ -72,11 +102,15 @@ return {
     },
     ["<leader>;t"] = {
       function ()
-      -- sort.trim_buffer()
-        -- sort.populateQuickfix()
-        -- sort.showFileList()
-        -- sort.showBufferList()
-        sort.popup_buffers()
+        local pattern = vim.fn.expand("<cword>")
+        local path = vim.fn.expand("%:h")
+        -- local pattern = vim.fn.input("regular expression: ")
+        -- sort.populateQuickfix(pattern)
+        -- sort.trim_buffer()
+        -- sort.regex_buf_quickfix(pattern)
+        -- sort.fzf_quickfix()
+        sort.search_path_files(path, pattern)
+        sort.grep_path_quickfix(pattern, path)
       end,
       desc = "Sort trim buffer"
     },
