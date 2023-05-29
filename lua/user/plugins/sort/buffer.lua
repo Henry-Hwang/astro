@@ -1,27 +1,30 @@
 local buffer = {}
 
-function buffer.retrieve_id_from_cursor_line()
+function buffer.retrieve_info_from_cursor_line()
     local cursor_pos = vim.api.nvim_win_get_cursor(0)
     local line_number = cursor_pos[1]
     local buffer_info = vim.api.nvim_buf_get_lines(0, line_number - 1, line_number, false)[1]
     local separator_pos = string.find(buffer_info, ":")
-    local buffer_id = 1
+    local bufnr = 1
     if separator_pos then
-      buffer_id = string.sub(buffer_info, 1, separator_pos - 1)
+      bufnr = tonumber(string.sub(buffer_info, 1, separator_pos - 1))
       -- local buffer_name = string.sub(buffer_info, separator_pos + 2)
     end
 
-  return buffer_id
+  local info = vim.fn.getbufinfo(bufnr)[1]
+  return bufnr, info.lnum
 end
 
 function buffer.format_string(bufnr, path)
   local base = vim.fn.fnamemodify(path, ':t')
   local dir = vim.fn.fnamemodify(path, ':h')
+  local info = vim.fn.getbufinfo(bufnr)[1]
 
+  -- local test = vim.fn.getbufvar(bufnr, "&linecount")
   if 1 == vim.fn.getbufvar(bufnr, "&modified") then
     return string.format("%2d: %s + .. %s", bufnr, base, dir)
   else
-    return string.format("%2d: %s   .. %s", bufnr, base, dir)
+    return string.format("%2d: %s   .. %s, %s, %s", bufnr, base, dir, info.lnum, info.lastused)
   end
 end
 
@@ -39,20 +42,12 @@ function buffer.enumerate_and_sort()
   end
   -- Sort the buffer list by most recent use
   table.sort(buffer_list, function(a, b)
-    local success, a_last_used = pcall(vim.api.nvim_buf_get_var, a, "open_timestamp")
-    if not success then
-      a_last_used = 0
-    end
-    local success, b_last_used = pcall(vim.api.nvim_buf_get_var, b, "open_timestamp")
-    if not success then
-      b_last_used = 0
-    end
-    return tonumber(a_last_used) > tonumber(b_last_used)
+    local binfo, ainfo = vim.fn.getbufinfo(b)[1], vim.fn.getbufinfo(a)[1]
+    return ainfo.lastused > binfo.lastused
   end)
 
-  if #buffer_list > 1 then
-    table.remove(buffer_list, 1)
-  end
+  local alt = table.remove(buffer_list, vim.fn.bufnr("#"))
+  table.insert(buffer_list, alt)
 
   for _, buf in ipairs(buffer_list) do
     local path = vim.api.nvim_buf_get_name(buf)

@@ -272,9 +272,10 @@ function sort.popup_buffers()
   end)
 
   local ok = popup:map("n", "<cr>", function(bufnr)
-    local buffer_id = buffer.retrieve_id_from_cursor_line()
-    vim.api.nvim_set_current_buf(tonumber(buffer_id))
-    -- vim.cmd(":b " .. buffer_id)
+    local id, lnum = buffer.retrieve_info_from_cursor_line()
+    vim.api.nvim_set_current_buf(id)
+    vim.api.nvim_win_set_cursor(0, {lnum, 0})
+    -- vim.cmd(":b " .. id)
   end, { noremap = true })
   -- set content
   local buffer_list = buffer.enumerate_and_sort()
