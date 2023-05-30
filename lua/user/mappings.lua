@@ -30,6 +30,7 @@ return {
     ["<Leader>yy"] = {":<C-u>execute 'normal! ' . v:count1 . 'yy' | let @+ = @0<cr>", desc = "Copy to system clipboard" },
     ["<Leader>p"] = { ":put +<cr>", desc = "Paste from register(+)" },
     ["<Leader>W"] = { ":wa!<cr>", desc = "Write all force" },
+    ["<Leader>C"] = { ":bd!<cr>", desc = "Force Remove buffer" },
     -- ["<Leader>,"] = { "<cmd>tcd %:h<cr>", desc = "Tcd to current directly" },
     ["<C-a>"] = {
       function ()
@@ -40,6 +41,12 @@ return {
     ["<leader>q"] = {
       function () sort.toggle_quickfix() end,
       desc = "Toggle Quickfix"
+    },
+    ["<leader>,p"] = {
+      function ()
+        sort.menu_default_path()
+      end,
+      desc = "Most Use Path"
     },
     ["<leader>,g"] = {
       function ()
@@ -117,7 +124,8 @@ return {
         -- sort.trim_buffer()
         -- sort.regex_buf_quickfix(pattern)
         -- sort.fzf_quickfix()
-        sort.popup_search(pattern, path)
+        sort.menu_default_path()
+        -- sort.popup_search(pattern, path)
       end,
       desc = "Test block"
     },

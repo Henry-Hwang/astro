@@ -285,15 +285,15 @@ function sort.popup_buffers()
   vim.bo[popup.bufnr].readonly = true
 end
 
-function sort.menu()
+function sort.menu_default_path()
   local Menu = require("nui.menu")
   local event = require("nui.utils.autocmd").event
 
   local menu = Menu({
     position = "50%",
     size = {
-      width = 25,
-      height = 5,
+      width = 60,
+      height = 15,
     },
     border = {
       style = "single",
@@ -307,16 +307,33 @@ function sort.menu()
     },
   }, {
       lines = {
-        Menu.item("Hydrogen (H)"),
-        Menu.item("Carbon (C)"),
-        Menu.item("Nitrogen (N)"),
-        Menu.separator("Noble-Gases", {
-          char = "-",
-          text_align = "right",
-        }),
-        Menu.item("Helium (He)"),
-        Menu.item("Neon (Ne)"),
-        Menu.item("Argon (Ar)"),
+        Menu.item("C:\\Users\\hhuang\\AppData\\Local\\nvim\\lua\\user"),
+        Menu.item("C:\\work\\customer\\meizu"),
+        Menu.item("C:\\work\\customer\\xiaomi"),
+        Menu.item("C:\\work\\src\\capi_cirrus_sp\\myspf"),
+        Menu.item("C:\\work\\src\\aus\\github\\Cirrus-Logic-Software\\claw-monorepo"),
+        Menu.item("C:\\work\\src\\aus\\scs"),
+        Menu.item("C:\\work\\src\\aus\\cirrus\\tools"),
+        Menu.item("C:\\work\\src\\aus\\bitbuket\\AmpWorkstation"),
+        Menu.item("C:\\work\\src\\aus\\amps"),
+        Menu.item("C:\\work\\src\\aus\\system-test"),
+        Menu.item("C:\\work\\src\\Android\\cirrus\\app\\src\\main\\cpp\\tools"),
+        Menu.item("C:\\work\\src\\hvim"),
+        Menu.item("C:\\work\\tools\\Bin"),
+        Menu.item("C:\\ProgramData\\Cirrus\\ Logic\\SCS_1.7"), -- keep a \ in the line to representing a space
+        Menu.item("C:\\Users\\hhuang\\scs_workspaces"),
+        Menu.item("C:\\Users\\hhuang\\AppData\\Local\\Cirrus\\ Logic"), -- keep a \ in the line to representing a space
+        Menu.item("C:\\Users\\hhuang\\SoundClearStudio\\v1.7\\log"),
+        -- Menu.item("Hydrogen (H)"),
+        -- Menu.item("Carbon (C)"),
+        -- Menu.item("Nitrogen (N)"),
+        -- Menu.separator("Noble-Gases", {
+        --   char = "-",
+        --   text_align = "right",
+        -- }),
+        -- Menu.item("Helium (He)"),
+        -- Menu.item("Neon (Ne)"),
+        -- Menu.item("Argon (Ar)"),
       },
       max_width = 20,
       keymap = {
@@ -329,7 +346,8 @@ function sort.menu()
         print("Menu Closed!")
       end,
       on_submit = function(item)
-        print("Menu Submitted: ", item.text)
+        vim.cmd(":Neotree filesystem float dir=" .. item.text)
+        -- print("Menu Submitted: ", item.text)
       end,
     })
 
