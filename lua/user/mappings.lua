@@ -47,7 +47,7 @@ return {
         local path = vim.fn.expand("%:h")
         sort.grep_path_quickfix(pattern, path)
       end,
-      desc = "Grep WORD in path"
+      desc = "Find WORD in path"
     },
     ["<leader>,l"] = {
       function ()
@@ -94,16 +94,6 @@ return {
 	    end,
 	    desc = "Explore user config directory"
 	  },
-    -- quick save
-    -- ["<C-s>"] = { ":w!<cr>", desc = "Save File" },  -- change description but the same command
-    ["<leader>dr"] = {
-      function()
-        local word = vim.fn.expand "<cword>"
-        local rp = vim.fn.input "Replace with: "
-        vim.cmd("%s/" .. word .. "/" .. rp .. "/g")
-      end,
-    },
-    -- sort keep, delete
     ["<leader>;k"] = {
       function ()
       local pattern = vim.fn.input("Pattern: ")
@@ -130,12 +120,6 @@ return {
         sort.popup_search(pattern, path)
       end,
       desc = "Test block"
-    },
-    ["<leader>;o"] = {
-      function ()
-        print("Test ...")
-      end,
-      desc = "Sort Test"
     },
   },
   

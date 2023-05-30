@@ -15,7 +15,7 @@ function buffer.retrieve_info_from_cursor_line()
   return bufnr, info.lnum
 end
 
-function buffer.format_string(bufnr, path)
+function buffer.format_lines(bufnr, path)
   local base = vim.fn.fnamemodify(path, ':t')
   local dir = vim.fn.fnamemodify(path, ':h')
   local info = vim.fn.getbufinfo(bufnr)[1]
@@ -31,12 +31,12 @@ end
 function buffer.enumerate_and_sort()
   local buffers = vim.api.nvim_list_bufs()
   local buffer_list = {}
-  local buffer_show = {}
+  local show_list = {}
 
   for _, buf in ipairs(buffers) do
     local path = vim.api.nvim_buf_get_name(buf)
     path = string.gsub(path, "^%s*(.-)%s*$", "%1")
-    if path ~= "" then
+    if vim.api.nvim_buf_is_loaded(buf) and path ~= "" then
       table.insert(buffer_list, buf)
     end
   end
@@ -53,12 +53,10 @@ function buffer.enumerate_and_sort()
 
   for _, buf in ipairs(buffer_list) do
     local path = vim.api.nvim_buf_get_name(buf)
-    path = string.gsub(path, "^%s*(.-)%s*$", "%1")
-    if path ~= "" then
-      local info = buffer.format_string(buf, path)
-      table.insert(buffer_show, info)
-    end
+    table.insert(show_list, buffer.format_lines(buf, path))
   end
+  return show_list
+end
 
 function buffer.trim()
   local bufnr = vim.api.nvim_get_current_buf()
@@ -77,8 +75,6 @@ function buffer.trim()
 
   -- Replace the buffer contents with the trimmed lines
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-end
-  return buffer_show
 end
 
 function buffer.match_lines_to_quickfix_list(word)
