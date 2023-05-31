@@ -10,6 +10,30 @@ function sort.toggle_quickfix()
   window.toggle_quickfix()
 end
 
+function sort.path_join(...)
+  local separator = package.config:sub(1,1) -- Get the path separator based on the current platform
+  local path = table.concat({...}, separator)
+  return path:gsub(separator.."+", separator):gsub(separator.."$", "")
+end
+
+function sort.nvim_userdir()
+  local userdir = "~/.config/nvim/lua/user"
+  if vim.fn.has('win32') == 1 then
+		userdir = vim.fn.getenv("LOCALAPPDATA") .. "/nvim/lua/user"
+	end
+	vim.cmd(":Neotree filesystem position=float dir=" .. userdir)
+end
+
+function sort.print(log_string)
+  local log_buffer_name = "lua_nvim.log"
+  local log_buffer = vim.fn.bufnr(log_buffer_name)
+  if log_buffer == -1 then
+    log_buffer = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_name(log_buffer, log_buffer_name)
+  end
+  vim.api.nvim_buf_set_lines(log_buffer, -1, -1, false, log_string)
+end
+
 function sort.regex_keep_match(pattern)
   local bufnr = vim.api.nvim_get_current_buf()
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -49,105 +73,6 @@ function sort.regex_delete_match(pattern)
 
   -- Replace the buffer contents with the non-matching lines
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-end
-
-function sort.grep_path_quickfix(pattern, path)
-  -- Build the grep command
-  local grep_command = string.format("grep -nr '%s' '%s'", pattern, path)
-
-  -- Run grep command and capture the output
-  local grep_output = vim.fn.system(grep_command)
-
-  -- Split the output into lines
-  local lines = vim.split(grep_output, "\n")
-
-  -- Clear the existing quickfix list
-  vim.fn.setqflist({}, "r")
-
-  -- Populate the quickfix list with the lines
-  local quickfix_list = {}
-  for _, line in ipairs(lines) do
-    if line ~= "" then
-      print(line)
-      local filename, linenumber, text = line:match("^(.-):(%d+):(.+)$")
-      if filename and linenumber and text then
-        table.insert(quickfix_list, {filename = filename, lnum = linenumber, text = text})
-      end
-    end
-  end
-  vim.fn.setqflist(quickfix_list, "a")
-  vim.cmd("copen")
-end
-
-function sort.search_path_files(path, pattern)
-  local files = vim.fn.readdir(path)
-  local qflist = {}
-  -- Iterate over the files and create quickfix entries
-  for _, file in ipairs(files) do
-    table.insert(qflist, {filename = file})
-  end
-
-  -- Set the quickfix list
-  vim.fn.setqflist(qflist)
-  vim.cmd("copen")
-end
-
-function sort.fzf_quickfix()
-  -- Run FZF command and capture the output
-  local fzf_command = "fzf"
-  local fzf_output = vim.fn.system(fzf_command)
-
-  -- Split the output into lines
-  local lines = vim.split(fzf_output, "\n")
-
-  -- Clear the existing quickfix list
-  vim.fn.setqflist({}, "r")
-
-  -- Populate the quickfix list with the lines
-  local quickfix_list = {}
-  for _, line in ipairs(lines) do
-    if line ~= "" then
-      table.insert(quickfix_list, {filename = line})
-    end
-  end
-  vim.fn.setqflist(quickfix_list, "a")
-end
-
-function sort.regex_buf_quickfix(pattern)
-  local lines = {}
-  local bufnr = vim.api.nvim_get_current_buf()
-  local regex = vim.regex(pattern)
-
-  buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  -- Iterate over each line in the buffer
-  for line_number, line_text in ipairs(buffer_lines) do
-    -- Check if the line contains the pattern "sample"
-    -- if string.find(line_text, pattern) then
-    if regex:match_str(line_text) then
-      -- Create a table representing the quickfix entry and add it to the lines table
-      table.insert(lines, {
-        filename = vim.api.nvim_buf_get_name(bufnr),
-        lnum = line_number,
-        text = line_text
-      })
-    end
-  end
-
-  -- Set the lines in the quickfix list
-  vim.fn.setqflist(lines)
-
-  -- vim.cmd("cwindow")
-  vim.cmd("copen")
-end
-
-
-function sort.find_buf_quickfix(word)
-  local qfix_lines = buffer.match_lines_to_quickfix_list(word)
-  -- Set the lines in the quickfix list
-  vim.fn.setqflist(qfix_lines)
-
-  -- vim.cmd("cwindow")
-  vim.cmd("copen")
 end
 
 -- Function to populate quickfix list with file names in current directory
@@ -205,34 +130,137 @@ function sort.showFileList1()
   vim.api.nvim_set_current_win(winnr)
 end
 
+function sort.grep_path_quickfix(pattern, path)
+  local grep_command = string.format("grep -nr '%s' '%s'", pattern, path)
+  local grep_output = vim.fn.system(grep_command)
+  local lines = vim.split(grep_output, "\n")
+  vim.fn.setqflist({}, "r")
+  local quickfix_list = {}
+  for _, line in ipairs(lines) do
+    if line ~= "" then
+      local filename, linenumber, text = line:match("^(.-):(%d+):(.+)$")
+      if filename and linenumber and text then
+        table.insert(quickfix_list, {filename = filename, lnum = linenumber, text = text})
+      end
+    end
+  end
+  vim.fn.setqflist(quickfix_list, "a")
+  vim.cmd("copen")
+end
+
+function sort.fzf_quickfix()
+  -- Run FZF command and capture the output
+  local fzf_command = "fzf"
+  local fzf_output = vim.fn.system(fzf_command)
+
+  -- Split the output into lines
+  local lines = vim.split(fzf_output, "\n")
+
+  -- Clear the existing quickfix list
+  vim.fn.setqflist({}, "r")
+
+  -- Populate the quickfix list with the lines
+  local quickfix_list = {}
+  for _, line in ipairs(lines) do
+    if line ~= "" then
+      table.insert(quickfix_list, {filename = line})
+    end
+  end
+  vim.fn.setqflist(quickfix_list, "a")
+end
+
+function sort.find_word_quickfix(word)
+  sort.regex_buf_quickfix({word})
+end
+
+function sort.regex_buf_quickfix(arguments)
+  local pattern = arguments[1]
+  if pattern ~= "" then
+    local qfix_lines = buffer.regex_lines_to_quickfix_list(pattern)
+    -- Set the lines in the quickfix list
+    vim.fn.setqflist(qfix_lines)
+    vim.cmd("copen")
+  end
+end
+
+function sort.find_files(pattern, path)
+  if vim.fn.has('win32') == 1 then
+    local new = sort.path_join(path, pattern)
+    -- https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir
+    command = 'dir ' .. new .. ' /b/s/a:-d'
+  else
+    command = 'echo ..'
+  end
+  sort.print({"find_files: ---", command, "end ---"})
+  return vim.fn.systemlist(command)
+end
+
+function sort.find_files_quickfix(arguments)
+  local pattern, path = arguments[1], arguments[2]
+  local file_paths = sort.find_files(pattern, path)
+  local quickfix_list = {}
+  for _, file in ipairs(file_paths) do
+    local tfile = string.gsub(file, "^%s*(.-)%s*$", "%1")
+    table.insert(quickfix_list, {filename = tfile})
+  end
+  
+  vim.fn.setqflist(quickfix_list)
+  vim.cmd("copen")
+end
+
+function sort.float_information(title, entries)
+  -- local entries = {"aaaaa", "bbbb"}
+  vim.fn.setqflist({}, "r", {title = title, items = entries})
+  -- Open the quickfix list in a floating window
+  vim.lsp.util.open_floating_preview(entries)
+end
+
+function sort.explore(path)
+  local command
+  if vim.fn.has('win32') == 1 then
+    command = 'start ' .. path
+  else
+    command = 'echo ..'
+  end
+  os.execute(command)
+  vim.api.nvim_echo({{"Explore " ..path, "Title"}}, true, {})
+end
+
 -- Function to create a floating window and show file names in current directory
-function sort.popup_search(pattern, path)
+function sort.find_word_quickfix_popup(pattern, path)
+  sort.popup_search({pattern, path}, sort.regex_buf_quickfix)
+end
+
+function sort.find_files_quickfix_popup(pattern, path)
+  if pattern == "" then pattern = "*.*" end
+  if path == "" then pattern = "." end
+  sort.popup_search({pattern, path}, sort.find_files_quickfix)
+end
+
+function sort.popup_search(arguments, callback)
   local Input = require("nui.input")
   local event = require("nui.utils.autocmd").event
 
   local input = Input({
     position = "50%",
-    size = {
-      width = 60,
-    },
-    border = {
+    size = { width = 60, },
+    border = { 
       style = "single",
-      text = {
-        top = "[Search]",
-        top_align = "center",
-      },
+      text = { top = "[Search]", top_align = "center",},
     },
-    win_options = {
-      winhighlight = "Normal:Normal,FloatBorder:Normal",
-    },
+    win_options = { winhighlight = "Normal:Normal,FloatBorder:Normal",},
   }, {
-      prompt = "> ",
-      default_value = pattern,
+      prompt = "> ", default_value = table.concat(arguments, "|"),
       on_close = function()
         print("Input Closed!")
       end,
       on_submit = function(value)
-        print("Input Submitted: " .. value)
+        local values = {}
+        for v in string.gmatch(value, "([^|]+)") do
+          table.insert(values, v)
+        end
+        -- sort.print({"tag:0002---", values[1], values[2], "tag: end----"})
+        callback(values)
       end,
     })
 
@@ -353,6 +381,44 @@ function sort.menu_default_path()
 
   -- mount the component
   menu:mount()
+end
+
+function sort.layout()
+  local Popup = require("nui.popup")
+  local Layout = require("nui.layout")
+
+  local popup_dn, popup_up = Popup({
+    enter = true,
+    border = "single",
+  }), Popup({
+    border = "double",
+  })
+
+  local layout = Layout(
+    {
+      position = "50%",
+      size = {
+        width = 80,
+        height = "60%",
+      },
+    },
+    Layout.Box({
+      Layout.Box(popup_up, { size = "20%" }),
+      Layout.Box(popup_dn, { size = "80%" }),
+    }, { dir = "col" })
+  )
+
+
+  local buffer_list = buffer.enumerate_and_sort()
+  popup_dn:map("n", {"r","b"}, function()
+    vim.api.nvim_buf_set_lines(popup_up.bufnr, 0, -1, false, buffer_list)
+  end, {})
+
+  popup_up:map("n", {"r","b"}, function()
+    vim.api.nvim_buf_set_lines(popup_dn.bufnr, 0, -1, false, buffer_list)
+  end, {})
+
+  layout:mount()
 end
 return sort
 

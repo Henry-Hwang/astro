@@ -20,7 +20,6 @@ function buffer.format_lines(bufnr, path)
   local dir = vim.fn.fnamemodify(path, ':h')
   local info = vim.fn.getbufinfo(bufnr)[1]
 
-  -- local test = vim.fn.getbufvar(bufnr, "&linecount")
   if 1 == vim.fn.getbufvar(bufnr, "&modified") then
     return string.format("%2d: %s + .. %s", bufnr, base, dir)
   else
@@ -77,7 +76,26 @@ function buffer.trim()
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
 end
 
-function buffer.match_lines_to_quickfix_list(word)
+function buffer.regex_lines_to_quickfix_list(pattern)
+  local qfix_lines = {}
+  local bufnr = vim.api.nvim_get_current_buf()
+  local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local regex = vim.regex(pattern)
+  -- Iterate over each line in the buffer
+  for line_number, line_text in ipairs(buffer_lines) do
+    if regex:match_str(line_text) then
+      -- Create a table representing the quickfix entry and add it to the lines table
+      table.insert(qfix_lines, {
+        filename = vim.api.nvim_buf_get_name(bufnr),
+        lnum = line_number,
+        text = line_text
+      })
+    end
+  end
+  return qfix_lines
+end
+
+function buffer.find_lines_to_quickfix_list(word)
   local qfix_lines = {}
   local bufnr = vim.api.nvim_get_current_buf()
   local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)

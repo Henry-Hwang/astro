@@ -4,128 +4,46 @@
 -- lower level configuration and more robust one. (which-key will
 -- automatically pick-up stored data by this setting.)
 local sort = require "user.plugins.sort.sort"
-local system = vim.loop.os_uname().sysname
-local userdir = vim.fn.getenv("HOME") .. "/.config/nvim/lua/user"
 return {
   -- first key is the mode
   n = {
-    -- second key is the lefthand side of the map
     -- mappings seen under group name "Buffer"
+    ["<leader>b" ] = { name = "Buffers" },
     ["<leader>bn"] = { "<cmd>tabnew<cr>", desc = "New tab" },
-    ["<leader>bD"] = {
-      function()
-        require("astronvim.utils.status").heirline.buffer_picker(function(bufnr) require("astronvim.utils.buffer").close(bufnr) end)
-      end,
-      desc = "Pick to close",
-    },
-    -- tables with the `name` key will be registered with which-key if it's installed
-    ["<leader>b"] = { name = "Buffers" },
-    ["<leader>r"] = { ":%s/<C-r><C-w>/<C-r><C-w>/gc", desc = "Replace word" },
-    ["ff"] = { "/<C-r><C-w>", desc = "Search word"},
-    ["<C-s>"] = { ":let @a='' <bar> g/<C-r><C-w>/yank A", desc = "Handle lines with [PATTEN] " },
-    -- ["<C-a>"] = { "<cmd>Neotree buffers position=float<cr>", desc = "Show buffers" },  -- change description but the same command
-    ["<C-f>"] = { "<cmd>Telescope find_files<cr>", desc = "Find files" },  -- change description but the same command
-    ["<C-e>"] = { "<cmd>Neotree filesystem dir=%:h float<cr>", desc = "Path to file" },  -- change description but the same command
-    -- ["<Leader>y"] = { "\"+y", desc = "Copy to system clipboard(+)"},
+    ["<leader>bD"] = {function() require("astronvim.utils.status").heirline.buffer_picker(function(bufnr) require("astronvim.utils.buffer").close(bufnr) end) end, desc = "Pick to close",},
+    ["<leader>r" ] = { ":%s/<C-r><C-w>/<C-r><C-w>/gc", desc = "Replace word" },
+    ["ff"        ] = { "/<C-r><C-w>", desc = "Search word"},
+    ["<C-s>"     ] = { ":let @a='' <bar> g/<C-r><C-w>/yank A", desc = "Handle lines with [PATTEN] " },
+    ["<C-e>"     ] = { "<cmd>Neotree filesystem dir=%:h float<cr>", desc = "Path to file" },  -- change description but the same command
     ["<Leader>yy"] = {":<C-u>execute 'normal! ' . v:count1 . 'yy' | let @+ = @0<cr>", desc = "Copy to system clipboard" },
-    ["<Leader>p"] = { ":put +<cr>", desc = "Paste from register(+)" },
-    ["<Leader>W"] = { ":wa!<cr>", desc = "Write all force" },
-    ["<Leader>C"] = { ":bd!<cr>", desc = "Force Remove buffer" },
+    ["<Leader>p" ] = { ":put +<cr>", desc = "Paste from register(+)" },
+    ["<Leader>W" ] = { ":wa!<cr>", desc = "Write all force" },
+    ["<Leader>C" ] = { ":bd!<cr>", desc = "Force Remove buffer" },
+    ["<C-a>"     ] = {function () sort.popup_buffers() end, desc = "List buffer sorted"},
+    ["<leader>q" ] = {function () sort.toggle_quickfix() end, desc = "Toggle Quickfix"},
+    ["<leader>," ] = { name = "Search" },
+    ["<leader>,p"] = {function () sort.menu_default_path() end, desc = "Most Use Path"},
+    ["<leader>,e"] = {function () sort.explore(vim.fn.expand("%:h")) end, desc = "Explore Path"},
+    ["<leader>,k"] = {function () sort.trim_buffer() end, desc = "Trim buffer"},
+	  ["<Leader>,u"] = {function () sort.nvim_userdir() end, desc = "Neovim Directory"},
+    ["<leader>,g"] = {function () sort.grep_path_quickfix(vim.fn.expand("<cword>"), vim.fn.expand("%:h")) end, desc = "Find WORD in path"},
+    ["<leader>,r"] = {function () sort.regex_buf_quickfix({vim.fn.input("\nPeter\\&Bob, Peter\\|Bob\n Regex: ")}) end, desc = "Regex Buffer"},
+    ["<leader>,f"] = {function () sort.find_word_quickfix(vim.fn.expand("<cword>")) end, desc = "Find WORD in buffer"},
+    ["<leader>,F"] = {function () sort.find_word_quickfix_popup(vim.fn.expand("<cword>"), vim.fn.expand("%:h")) end, desc = "Find WORD - Popup"},
+    ["<leader>,m"] = {function () sort.find_files_quickfix(vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")) end, desc = "Find Files"},
+    ["<leader>,M"] = {function () sort.find_files_quickfix_popup(vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")) end, desc = "Find Files - Popup"},
     -- ["<Leader>,"] = { "<cmd>tcd %:h<cr>", desc = "Tcd to current directly" },
-    ["<C-a>"] = {
-      function ()
-        sort.popup_buffers()
-      end,
-      desc = "List buffer sorted"
-    },
-    ["<leader>q"] = {
-      function () sort.toggle_quickfix() end,
-      desc = "Toggle Quickfix"
-    },
-    ["<leader>,p"] = {
-      function ()
-        sort.menu_default_path()
-      end,
-      desc = "Most Use Path"
-    },
-    ["<leader>,g"] = {
-      function ()
-        local pattern = vim.fn.expand("<cword>")
-        local path = vim.fn.expand("%:h")
-        sort.grep_path_quickfix(pattern, path)
-      end,
-      desc = "Find WORD in path"
-    },
-    ["<leader>,l"] = {
-      function ()
-        local pattern = vim.fn.expand("<cword>")
-        sort.find_buf_quickfix(pattern)
-      end,
-      desc = "Find WORD in buffer"
-    },
-    ["<leader>,r"] = {
-      function ()
-        local pattern = vim.fn.input("regular expression: ")
-        sort.regex_buf_quickfix(pattern)
-      end,
-      desc = "Regex patten in buffer"
-    },
-    ["<leader>,f"] = {
-      function ()
-        -- local pattern = vim.fn.expand("<cword>")
-        local path = vim.fn.expand("%:h")
-        sort.search_path_files(path, "pattern")
-      end,
-      desc = "Search files in current path"
-    },
-    ["<leader>,s"] = {
-      function ()
-        local pattern = vim.fn.expand("<cword>")
-        local path = vim.fn.expand("%:h")
-        sort.popup_search(pattern, path)
-      end,
-      desc = "Search WORD on popup"
-    },
-    ["<leader>,k"] = {
-      function ()
-        sort.trim_buffer()
-      end,
-      desc = "Trim buffer"
-    },
-	  ["<Leader>,u"] = { 
-	    function ()
-		    if system == "Windows_NT" then
-			    userdir = vim.fn.getenv("LOCALAPPDATA") .. "/nvim/lua/user"
-		    end
-		    vim.cmd(":Neotree filesystem position=float dir=" .. userdir)
-	    end,
-	    desc = "Explore user config directory"
-	  },
-    ["<leader>;k"] = {
-      function ()
-      local pattern = vim.fn.input("Pattern: ")
-      sort.regex_keep_match(pattern)
-      end,
-      desc = "Sort keep lines"
-    },
-    ["<leader>;d"] = {
-      function ()
-      local pattern = vim.fn.input("regular expression: ")
-      sort.regex_keep_match(pattern)
-      end,
-      desc = "Sort delete lines"
-    },
+    -- ["<Leader>y"] = { "\"+y", desc = "Copy to system clipboard(+)"},
+    ["<leader>;k"] = {function () sort.regex_keep_match(vim.fn.input("Pattern: ")) end, desc = "Sort keep lines"},
+    ["<leader>;d"] = {function () sort.regex_keep_match(vim.fn.input("Regex: ")) end, desc = "Sort delete lines"},
     ["<leader>;;"] = {
       function ()
-        local pattern = vim.fn.expand("<cword>")
-        local path = vim.fn.expand("%:h")
-        -- local pattern = vim.fn.input("regular expression: ")
-        -- sort.populateQuickfix(pattern)
-        -- sort.trim_buffer()
-        -- sort.regex_buf_quickfix(pattern)
-        -- sort.fzf_quickfix()
-        sort.menu_default_path()
-        -- sort.popup_search(pattern, path)
+        local pattern, path = vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")
+        -- sort.layout()
+        -- sort.find_files(pattern, path)
+        -- sort.find_files_quickfix_popup(pattern, path)
+        -- Define the table of strings
+        -- Define the table of strings
       end,
       desc = "Test block"
     },
