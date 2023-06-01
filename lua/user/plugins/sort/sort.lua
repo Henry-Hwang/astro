@@ -75,24 +75,6 @@ function sort.regex_delete_match(pattern)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
 end
 
--- Function to populate quickfix list with file names in current directory
-function sort.populateQuickfix1(pattern)
-  local files = vim.fn.readdir(vim.fn.getcwd())
-
-  local quickfix_list = {}
-  
-  for _, file in ipairs(files) do
-    table.insert(quickfix_list, {filename = file})
-  end
-  
-  vim.fn.setqflist(quickfix_list)
-  vim.cmd("copen")
-end
-
--- Command to trigger the plugin
--- vim.cmd("command! -nargs=0 FileList lua populateQuickfix()")
-
--- Function to create a floating window and show file names in current directory
 function sort.showFileList1()
   local files = vim.fn.readdir(vim.fn.getcwd())
   local file_list = {}
@@ -104,15 +86,18 @@ function sort.showFileList1()
   -- Create a new floating window
   local bufnr = vim.api.nvim_create_buf(false, true)
   local winnr = vim.api.nvim_open_win(bufnr, true, {
-    relative = 'editor',
-    width = 40,
+    width = 80,
+    relative = "editor",
     height = #file_list,
-    row = 2,
-    col = 2,
+    row = 20,
+    col = 10,
+    title = "Buffers List",
+    title_pos = 'center',
+    -- style='minimal',
     focusable = true,
-    border = 'single'
+    border = 'rounded',
   })
-
+  vim.api.nvim_win_set_option(winnr, 'number', false)
   -- Set the buffer content with file names
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, file_list)
 
@@ -274,23 +259,31 @@ function sort.popup_search(arguments, callback)
 end
 
 
-function sort.popup_buffers()
+function sort.list_buf_popup()
   local Popup = require("nui.popup")
   local event = require("nui.utils.autocmd").event
 
   local popup = Popup({
+    relative = 'editor',
     enter = true,
     focusable = true,
     border = {
+      -- padding = {top = 0, bottom = 1,left = 0,right = 0,},
       style = "rounded",
+      text = {top = " Buffers List ", top_align = "center", bottom = "Don't Waste Time",bottom_align = "center",},
     },
+    -- zindex = 50,
     position = "50%",
-    size = {
-      width = "80%",
-      height = "60%",
+    size = {width = "80%", height = "60%",},
+    buf_options = {
+      modifiable = true,
+      readonly = false,
+    },
+    win_options = {
+      -- winblend = 5,
+      winhighlight = "Normal:Normal,FloatBorder:FloatBorder",
     },
   })
-
   -- mount/open the component
   popup:mount()
 
@@ -298,7 +291,9 @@ function sort.popup_buffers()
   popup:on(event.BufLeave, function()
     popup:unmount()
   end)
-
+  
+  -- popup.border:set_highlight("lua")
+  
   local ok = popup:map("n", "<cr>", function(bufnr)
     local id, lnum = buffer.retrieve_info_from_cursor_line()
     vim.api.nvim_set_current_buf(id)
@@ -310,7 +305,7 @@ function sort.popup_buffers()
   vim.api.nvim_buf_set_lines(popup.bufnr, 0, -1, false, buffer_list)
 
   vim.bo[popup.bufnr].modifiable = false
-  vim.bo[popup.bufnr].readonly = true
+  -- vim.bo[popup.bufnr].readonly = true
 end
 
 function sort.menu_default_path()

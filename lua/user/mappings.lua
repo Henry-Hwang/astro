@@ -19,7 +19,7 @@ return {
     ["<Leader>p" ] = { ":put +<cr>", desc = "Paste from register(+)" },
     ["<Leader>W" ] = { ":wa!<cr>", desc = "Write all force" },
     ["<Leader>C" ] = { ":bd!<cr>", desc = "Force Remove buffer" },
-    ["<C-a>"     ] = {function () sort.popup_buffers() end, desc = "List buffer sorted"},
+    ["<C-a>"     ] = {function () sort.list_buf_popup() end, desc = "List buffer sorted"},
     ["<leader>q" ] = {function () sort.toggle_quickfix() end, desc = "Toggle Quickfix"},
     ["<leader>," ] = { name = "Search" },
     ["<leader>,p"] = {function () sort.menu_default_path() end, desc = "Most Use Path"},
@@ -44,6 +44,7 @@ return {
         -- sort.find_files_quickfix_popup(pattern, path)
         -- Define the table of strings
         -- Define the table of strings
+        sort.showFileList1()
       end,
       desc = "Test block"
     },
