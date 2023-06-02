@@ -113,4 +113,15 @@ function buffer.find_lines_to_quickfix_list(word)
   return qfix_lines
 end
 
+function buffer.create_with_data(lines)
+  -- Create a new buffer
+  local bufnr = vim.api.nvim_create_buf(true, false)
+  -- Set the data in the buffer
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+
+  -- Optionally, open the buffer in a window
+  vim.api.nvim_command("vsplit")
+  vim.api.nvim_command("buffer " .. bufnr)
+end
+
 return buffer

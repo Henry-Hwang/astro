@@ -9,5 +9,7 @@ return {
   --     require("lsp_signature").setup()
   --   end,
   -- },
-    -- <S-Insert>
+    "krshrimali/nvim-autorunner",
+    -- depends on nvim-notify
+    -- "rcarriga/nvim-notify"   -- <S-Insert>
 }

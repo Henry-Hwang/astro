@@ -21,30 +21,36 @@ return {
     ["<Leader>C" ] = { ":bd!<cr>", desc = "Force Remove buffer" },
     ["<C-a>"     ] = {function () sort.list_buf_popup() end, desc = "List buffer sorted"},
     ["<leader>q" ] = {function () sort.toggle_quickfix() end, desc = "Toggle Quickfix"},
-    ["<leader>," ] = { name = "Search" },
-    ["<leader>,p"] = {function () sort.menu_default_path() end, desc = "Most Use Path"},
-    ["<leader>,e"] = {function () sort.explore(vim.fn.expand("%:h")) end, desc = "Explore Path"},
-    ["<leader>,k"] = {function () sort.trim_buffer() end, desc = "Trim buffer"},
-	  ["<Leader>,u"] = {function () sort.nvim_userdir() end, desc = "Neovim Directory"},
-    ["<leader>,g"] = {function () sort.grep_path_quickfix(vim.fn.expand("<cword>"), vim.fn.expand("%:h")) end, desc = "Find WORD in path"},
-    ["<leader>,r"] = {function () sort.regex_buf_quickfix({vim.fn.input("\nPeter\\&Bob, Peter\\|Bob\n Regex: ")}) end, desc = "Regex Buffer"},
-    ["<leader>,f"] = {function () sort.find_word_quickfix(vim.fn.expand("<cword>")) end, desc = "Find WORD in buffer"},
-    ["<leader>,F"] = {function () sort.find_word_quickfix_popup(vim.fn.expand("<cword>"), vim.fn.expand("%:h")) end, desc = "Find WORD - Popup"},
-    ["<leader>,m"] = {function () sort.find_files_quickfix(vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")) end, desc = "Find Files"},
-    ["<leader>,M"] = {function () sort.find_files_quickfix_popup(vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")) end, desc = "Find Files - Popup"},
+    ["<leader>," ] = {name = "Search",
+      p = {function () sort.menu_default_path() end, "Most Use Path"},
+      e = {function () sort.explore(vim.fn.expand("%:h")) end, "Explore Path"},
+      t = {function () sort.trim_buffer() end, "Trim buffer"},
+	    u = {function () sort.nvim_userdir() end, "Neovim Directory"},
+      g = {function () sort.grep_path_quickfix(vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")) end, "Find WORD in path"},
+      r = {function () sort.regex_buf_quickfix({vim.fn.input("\nPeter\\&Bob, Peter\\|Bob\n Regex: ")}) end, "Regex Buffer"},
+      f = {function () sort.find_word_quickfix(vim.fn.expand("<cword>")) end, "Find WORD in buffer"},
+      F = {function () sort.find_word_quickfix_popup(vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")) end, "Find WORD - Popup"},
+      m = {function () sort.find_files_quickfix(vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")) end, "Find Files"},
+      M = {function () sort.find_files_quickfix_popup(vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")) end, "Find Files - Popup"},
+      k = {function () sort.regex_keep_buffer(vim.fn.input("Regex: ")) end, "Regex and Keep"},
+      d = {function () sort.regex_remove_buffer(vim.fn.input("Regex: ")) end, "Regex and Remove"},
+      s = {function () sort.save_buffer_popup(vim.fn.expand("<cword>"), vim.fn.expand("%:p")) end, "Save Buffer - Popup"},
+    },
     -- ["<Leader>,"] = { "<cmd>tcd %:h<cr>", desc = "Tcd to current directly" },
     -- ["<Leader>y"] = { "\"+y", desc = "Copy to system clipboard(+)"},
-    ["<leader>;k"] = {function () sort.regex_keep_match(vim.fn.input("Pattern: ")) end, desc = "Sort keep lines"},
-    ["<leader>;d"] = {function () sort.regex_keep_match(vim.fn.input("Regex: ")) end, desc = "Sort delete lines"},
+    -- ["<leader>.p" ] = { ":!python %<cr>", desc = "Build Python" },
+    ["<leader>." ] = {name = "AutoRunner",
+      r = { "<cmd>AutoRunnerRun<cr>", "Run the command" },
+      t = { "<cmd>AutoRunnerToggle<cr>", "Toggle output window" },
+      e = { "<cmd>AutoRunnerEditFile<cr>", "Edit build file (if available in runtime directory)" },
+      a = { "<cmd>AutoRunnerAddCommand<cr>", "Add/change command" },
+      c = { "<cmd>AutoRunnerClearCommand<cr>", "Clear command" },
+      C = { "<cmd>AutoRunnerClearAll<cr>", "Clear all (command and buffers)" },
+      p = { "<cmd>AutoRunnerPrintCommand<cr>", "Print command" },
+    },
     ["<leader>;;"] = {
       function ()
         local pattern, path = vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")
-        -- sort.layout()
-        -- sort.find_files(pattern, path)
-        -- sort.find_files_quickfix_popup(pattern, path)
-        -- Define the table of strings
-        -- Define the table of strings
-        sort.showFileList1()
       end,
       desc = "Test block"
     },

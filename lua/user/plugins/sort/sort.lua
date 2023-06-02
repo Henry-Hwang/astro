@@ -34,46 +34,6 @@ function sort.print(log_string)
   vim.api.nvim_buf_set_lines(log_buffer, -1, -1, false, log_string)
 end
 
-function sort.regex_keep_match(pattern)
-  local bufnr = vim.api.nvim_get_current_buf()
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-
-  -- Prompt the user to enter a regular expression pattern to match
-  -- local pattern = vim.fn.input("regular expression: ")
-
-  -- Create a regular expression object from the pattern
-  local regex = vim.regex(pattern)
-
-  local new_lines = {}
-
-  for _, line in ipairs(lines) do
-    if regex:match_str(line) then
-      table.insert(new_lines, line)
-    end
-  end
-
-  -- Replace the buffer contents with the matched lines
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-end
-
-function sort.regex_delete_match(pattern)
-  local bufnr = vim.api.nvim_get_current_buf()
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-
-  -- Create a regular expression object from the pattern
-  local regex = vim.regex(pattern)
-
-  local new_lines = {}
-
-  for _, line in ipairs(lines) do
-    if not regex:match_str(line) then
-      table.insert(new_lines, line)
-    end
-  end
-
-  -- Replace the buffer contents with the non-matching lines
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
-end
 
 function sort.showFileList1()
   local files = vim.fn.readdir(vim.fn.getcwd())
@@ -116,11 +76,16 @@ function sort.showFileList1()
 end
 
 function sort.grep_path_quickfix(pattern, path)
-  local grep_command = string.format("grep -nr '%s' '%s'", pattern, path)
-  local grep_output = vim.fn.system(grep_command)
-  local lines = vim.split(grep_output, "\n")
+
   vim.fn.setqflist({}, "r")
   local quickfix_list = {}
+  -- local grep_command = string.format("rg.exe --no-heading '%s' %s", pattern, path)
+  local grep_command = string.format("grep -nr '%s' '%s'", pattern, path)
+  local grep_output = vim.fn.system(grep_command)
+
+  -- vim.api.nvim_notify(grep_command, vim.log.levels.INFO, {})
+  -- vim.api.nvim_notify(grep_output, vim.log.levels.INFO, {})
+  local lines = vim.split(grep_output, "\n")
   for _, line in ipairs(lines) do
     if line ~= "" then
       local filename, linenumber, text = line:match("^(.-):(%d+):(.+)$")
@@ -176,7 +141,6 @@ function sort.find_files(pattern, path)
   else
     command = 'echo ..'
   end
-  sort.print({"find_files: ---", command, "end ---"})
   return vim.fn.systemlist(command)
 end
 
@@ -184,13 +148,42 @@ function sort.find_files_quickfix(arguments)
   local pattern, path = arguments[1], arguments[2]
   local file_paths = sort.find_files(pattern, path)
   local quickfix_list = {}
+  local regex = vim.regex('.git')
   for _, file in ipairs(file_paths) do
-    local tfile = string.gsub(file, "^%s*(.-)%s*$", "%1")
-    table.insert(quickfix_list, {filename = tfile})
+      if not regex:match_str(file) then
+        local tfile = string.gsub(file, "^%s*(.-)%s*$", "%1")
+        table.insert(quickfix_list, {filename = tfile})
+      end
   end
   
   vim.fn.setqflist(quickfix_list)
   vim.cmd("copen")
+end
+
+function sort.regex_keep_buffer(pattern)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local regex = vim.regex(pattern)
+  local new_lines = {}
+  for _, line in ipairs(lines) do
+    if regex:match_str(line) then
+      table.insert(new_lines, line)
+    end
+  end
+  buffer.create_with_data(new_lines)
+end
+
+function sort.regex_remove_buffer(pattern)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local regex = vim.regex(pattern)
+  local new_lines = {}
+  for _, line in ipairs(lines) do
+    if not regex:match_str(line) then
+      table.insert(new_lines, line)
+    end
+  end
+  buffer.create_with_data(new_lines)
 end
 
 function sort.float_information(title, entries)
@@ -220,6 +213,31 @@ function sort.find_files_quickfix_popup(pattern, path)
   if pattern == "" then pattern = "*.*" end
   if path == "" then pattern = "." end
   sort.popup_search({pattern, path}, sort.find_files_quickfix)
+end
+
+function sort.save_buffer(arguments)
+    filepath = arguments[2]
+    -- Get the current buffer number
+    local bufnr = vim.api.nvim_get_current_buf()
+
+    -- Get the buffer contents
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+    -- Write the buffer contents to a file
+    local file = io.open(filepath, "w")
+    if file then
+        for _, line in ipairs(lines) do
+            file:write(line .. "\n")
+        end
+        file:close()
+        vim.api.nvim_command("edit " .. vim.fn.fnameescape(filepath))
+    else
+        print("Error: Unable to save buffer to file.")
+    end
+end
+
+function sort.save_buffer_popup(pattern, path)
+  sort.popup_search({pattern, path}, sort.save_buffer)
 end
 
 function sort.popup_search(arguments, callback)
