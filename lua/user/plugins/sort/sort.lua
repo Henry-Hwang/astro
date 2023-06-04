@@ -31,7 +31,8 @@ function sort.print(log_string)
     log_buffer = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_name(log_buffer, log_buffer_name)
   end
-  vim.api.nvim_buf_set_lines(log_buffer, -1, -1, false, log_string)
+  local lines = vim.split(log_string, "\n")
+  vim.api.nvim_buf_set_lines(log_buffer, -1, -1, false, lines)
 end
 
 
@@ -75,17 +76,20 @@ function sort.showFileList1()
   vim.api.nvim_set_current_win(winnr)
 end
 
-function sort.grep_path_quickfix(pattern, path)
+function sort.grep_path_quickfix(arguments)
+  local pattern = arguments[1]
+  local path = arguments[2]
+
+  if pattern == "" then
+      return
+  end
 
   vim.fn.setqflist({}, "r")
   local quickfix_list = {}
-  -- local grep_command = string.format("rg.exe --no-heading '%s' %s", pattern, path)
-  local grep_command = string.format("grep -nr '%s' '%s'", pattern, path)
-  local grep_output = vim.fn.system(grep_command)
-
-  -- vim.api.nvim_notify(grep_command, vim.log.levels.INFO, {})
-  -- vim.api.nvim_notify(grep_output, vim.log.levels.INFO, {})
-  local lines = vim.split(grep_output, "\n")
+  local command = string.format("rg --vimgrep --smart-case --no-column %s %s", pattern, path)
+  -- vim.api.nvim_notify(command, vim.log.levels.INFO, {})
+  local output = vim.fn.system(command)
+  local lines = vim.split(output, "\n")
   for _, line in ipairs(lines) do
     if line ~= "" then
       local filename, linenumber, text = line:match("^(.-):(%d+):(.+)$")
@@ -94,8 +98,11 @@ function sort.grep_path_quickfix(pattern, path)
       end
     end
   end
-  vim.fn.setqflist(quickfix_list, "a")
-  vim.cmd("copen")
+
+  if #quickfix_list > 0 then
+    vim.fn.setqflist(quickfix_list, "a")
+    vim.cmd("copen")
+  end
 end
 
 function sort.fzf_quickfix()
@@ -213,6 +220,10 @@ function sort.find_files_quickfix_popup(pattern, path)
   if pattern == "" then pattern = "*.*" end
   if path == "" then pattern = "." end
   sort.popup_search({pattern, path}, sort.find_files_quickfix)
+end
+
+function sort.grep_path_quickfix_popup(pattern, path)
+  sort.popup_search({pattern, path}, sort.grep_path_quickfix)
 end
 
 function sort.save_buffer(arguments)
