@@ -39,53 +39,11 @@ function sort.print(log_string)
   vim.api.nvim_buf_set_lines(log_buffer, -1, -1, false, lines)
 end
 
-
-function sort.showFileList1()
-  local files = vim.fn.readdir(vim.fn.getcwd())
-  local file_list = {}
-
-  for _, file in ipairs(files) do
-    table.insert(file_list, file)
-  end
-
-  -- Create a new floating window
-  local bufnr = vim.api.nvim_create_buf(false, true)
-  local winnr = vim.api.nvim_open_win(bufnr, true, {
-    width = 80,
-    relative = "editor",
-    height = #file_list,
-    row = 20,
-    col = 10,
-    title = "Buffers List",
-    title_pos = 'center',
-    -- style='minimal',
-    focusable = true,
-    border = 'rounded',
-  })
-  vim.api.nvim_win_set_option(winnr, 'number', false)
-  -- Set the buffer content with file names
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, file_list)
-
-  -- Set the floating window options
-  vim.api.nvim_win_set_option(winnr, 'wrap', false)
-  vim.api.nvim_win_set_option(winnr, 'winblend', 0)
-
-  -- Set the highlight group for the floating window
-  vim.cmd("highlight FileListWindow guibg=black guifg=white")
-
-  -- Set autocommand to close the window when leaving the buffer
-  vim.cmd("autocmd BufLeave <buffer> :call nvim_win_close(" .. winnr .. ", v:true)")
-
-  -- Focus the floating window
-  vim.api.nvim_set_current_win(winnr)
-end
-
 function find_top_dir(path)
   local separator = package.config:sub(1, 1) -- Get the path separator based on the current operating system
   local current = path
   for i = 1, 10, 1 do
     if is_top_dir(current) then
-      vim.api.nvim_notify('Found: ' ..current, vim.log.levels.INFO, {})
       return current
     end
     current = current:gsub(separator .. "[^" .. separator .. "]+$", "")
@@ -209,6 +167,7 @@ function sort.find_files_quickfix(arguments)
   
   vim.fn.setqflist(quickfix_list)
   vim.cmd("copen")
+  window.set_height()
 end
 
 function sort.regex_keep_buffer(pattern)
