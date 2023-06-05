@@ -175,15 +175,10 @@ function is_top_dir(path)
   end
 
   local files = vim.fn.systemlist(command)
-
   for _, file in ipairs(files) do
     for _, p in ipairs({"[/\\]?%.git$", "[/\\]?%.svn$"}) do
-      -- if string.match(file, "%.git") then
-      -- if string.find(strim(file), p) then
       if string.match(strim(file), p) then
-      -- if strim(file) == p then
         vim.api.nvim_notify(strim(file) .. ' ' ..p, vim.log.levels.INFO, {})
-        -- vim.api.nvim_notify('Found: ' ..current, vim.log.levels.INFO, {})
         return true 
       end
     end
@@ -194,12 +189,11 @@ end
 
 
 function sort.find_files(pattern, path)
+  local new = sort.path_join(path, pattern)
+  local command = 'find' .. new .. '-type f -not -path "./.git/*"'
   if vim.fn.has('win32') == 1 then
-    local new = sort.path_join(path, pattern)
     -- https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir
     command = 'dir ' .. new .. ' /b/s/a:-d'
-  else
-    command = 'find' .. new .. '-type f -not -path "./.git/*"'
   end
   files = vim.fn.systemlist(command)
 end
@@ -211,7 +205,7 @@ function sort.find_files_quickfix(arguments)
   local regex = vim.regex('.git')
   for _, file in ipairs(file_paths) do
       if not regex:match_str(file) then
-        local tfile = string.gsub(file, "^%s*(.-)%s*$", "%1")
+        local tfile = strim(file)
         table.insert(quickfix_list, {filename = tfile})
       end
   end
