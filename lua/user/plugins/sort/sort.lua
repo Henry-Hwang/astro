@@ -188,26 +188,23 @@ function is_top_dir(path)
 end
 
 
-function sort.find_files(pattern, path)
+function sort.find_files(path)
   local new = sort.path_join(path, pattern)
-  local command = 'find' .. new .. '-type f -not -path "./.git/*"'
+  local command = 'find ' .. path .. ' -type f -not -path "./.git/*"'
   if vim.fn.has('win32') == 1 then
     -- https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir
-    command = 'dir ' .. new .. ' /b/s/a:-d'
+    command = 'dir ' .. path .. ' /b/s/a:-d'
   end
-  files = vim.fn.systemlist(command)
+
+  return vim.fn.systemlist(command)
 end
 
 function sort.find_files_quickfix(arguments)
-  local pattern, path = arguments[1], arguments[2]
-  local file_paths = sort.find_files(pattern, path)
+  local _, path = arguments[1], arguments[2]
+  local file_paths = sort.find_files(path)
   local quickfix_list = {}
-  local regex = vim.regex('.git')
   for _, file in ipairs(file_paths) do
-      if not regex:match_str(file) then
-        local tfile = strim(file)
-        table.insert(quickfix_list, {filename = tfile})
-      end
+    table.insert(quickfix_list, {filename =strim(file)})
   end
   
   vim.fn.setqflist(quickfix_list)
