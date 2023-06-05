@@ -69,7 +69,7 @@ function sort.grep_quickfix(arguments)
   end
 
   vim.fn.setqflist({}, "r")
-  local quickfix_list = {}
+  local qfix_list = {}
   local command = string.format("rg --vimgrep --smart-case --no-column %s %s", pattern, path)
   -- vim.api.nvim_notify(command, vim.log.levels.INFO, {})
   local output = vim.fn.system(command)
@@ -78,36 +78,12 @@ function sort.grep_quickfix(arguments)
     if line ~= "" then
       local filename, linenumber, text = line:match("^(.-):(%d+):(.+)$")
       if filename and linenumber and text then
-        table.insert(quickfix_list, {filename = filename, lnum = linenumber, text = text})
+        table.insert(qfix_list, {filename = filename, lnum = linenumber, text = text})
       end
     end
   end
 
-  if #quickfix_list > 0 then
-    vim.fn.setqflist(quickfix_list, "a")
-    vim.cmd("copen")
-  end
-end
-
-function sort.fzf_quickfix()
-  -- Run FZF command and capture the output
-  local fzf_command = "fzf"
-  local fzf_output = vim.fn.system(fzf_command)
-
-  -- Split the output into lines
-  local lines = vim.split(fzf_output, "\n")
-
-  -- Clear the existing quickfix list
-  vim.fn.setqflist({}, "r")
-
-  -- Populate the quickfix list with the lines
-  local quickfix_list = {}
-  for _, line in ipairs(lines) do
-    if line ~= "" then
-      table.insert(quickfix_list, {filename = line})
-    end
-  end
-  vim.fn.setqflist(quickfix_list, "a")
+  window.qfix_open(qfix_list)
 end
 
 function sort.find_word_quickfix(word)
@@ -117,10 +93,11 @@ end
 function sort.regex_buf_quickfix(arguments)
   local pattern = arguments[1]
   if pattern ~= "" then
-    local qfix_lines = buffer.regex_lines_to_quickfix_list(pattern)
+    local qfix_list = buffer.regex_lines_to_qfix_list(pattern)
     -- Set the lines in the quickfix list
-    vim.fn.setqflist(qfix_lines)
-    vim.cmd("copen")
+    -- vim.fn.setqflist(qfix_list)
+    -- vim.cmd("copen")
+    window.qfix_open(qfix_list)
   end
 end
 
@@ -160,14 +137,14 @@ end
 function sort.find_files_quickfix(arguments)
   local _, path = arguments[1], arguments[2]
   local files = sort.find_files(find_top_dir(path))
-  local quickfix_list = {}
+  local qfix_list = {}
   for _, file in ipairs(files) do
-    table.insert(quickfix_list, {filename =strim(file)})
+    table.insert(qfix_list, {filename =strim(file)})
   end
-  
-  vim.fn.setqflist(quickfix_list)
-  vim.cmd("copen")
-  window.set_height()
+  window.qfix_open(qfix_list)
+  -- vim.fn.setqflist(qfix_list)
+  -- vim.cmd("copen")
+  -- window.set_height()
 end
 
 function sort.regex_keep_buffer(pattern)

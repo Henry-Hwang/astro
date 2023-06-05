@@ -13,6 +13,15 @@ function window.toggle_quickfix()
   end
 end
 
+function window.qfix_open(list)
+  vim.api.nvim_notify('quickfix: ' .. #list .. ' found', vim.log.levels.INFO, {})
+  if #list > 0 then
+    vim.fn.setqflist(list)
+    vim.cmd("copen")
+    window.set_height()
+  end
+end
+
 function window.set_height()
   local WinId = vim.fn.getqflist({winid = 0}).winid
   local width = vim.api.nvim_win_get_width(WinId)
