@@ -6,6 +6,10 @@ function sort.trim_buffer()
   buffer.trim()
 end
 
+function strim(str)
+  return string.gsub(string.gsub(str, "\r$", ""), "^%s*(.-)%s*$", "%1")
+end
+
 function sort.toggle_quickfix()
   window.toggle_quickfix()
 end
@@ -76,7 +80,29 @@ function sort.showFileList1()
   vim.api.nvim_set_current_win(winnr)
 end
 
-function sort.grep_path_quickfix(arguments)
+function find_top_dir(path)
+  local separator = package.config:sub(1, 1) -- Get the path separator based on the current operating system
+  local current = path
+  for i = 1, 10, 1 do
+    if is_top_dir(current) then
+      vim.api.nvim_notify('Found: ' ..current, vim.log.levels.INFO, {})
+      return current
+    end
+    current = current:gsub(separator .. "[^" .. separator .. "]+$", "")
+  end
+  return path
+end
+
+function sort.grep_global_quickfix(arguments)
+  local pattern = arguments[1]
+  local path = arguments[2]
+  local separator = package.config:sub(1, 1) -- Get the path separator based on the current operating system
+
+  path = find_top_dir(path)
+  sort.grep_quickfix({pattern, path})
+end
+
+function sort.grep_quickfix(arguments)
   local pattern = arguments[1]
   local path = arguments[2]
 
@@ -140,15 +166,42 @@ function sort.regex_buf_quickfix(arguments)
   end
 end
 
+function is_top_dir(path)
+  if vim.fn.has('win32') == 1 then
+    -- https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir
+    command = 'dir /ad /b ' ..path
+  else
+    command = 'find ' ..path.. ' -type d -maxdepth 1'
+  end
+
+  local files = vim.fn.systemlist(command)
+
+  for _, file in ipairs(files) do
+    for _, p in ipairs({"[/\\]?%.git$", "[/\\]?%.svn$"}) do
+      -- if string.match(file, "%.git") then
+      -- if string.find(strim(file), p) then
+      if string.match(strim(file), p) then
+      -- if strim(file) == p then
+        vim.api.nvim_notify(strim(file) .. ' ' ..p, vim.log.levels.INFO, {})
+        -- vim.api.nvim_notify('Found: ' ..current, vim.log.levels.INFO, {})
+        return true 
+      end
+    end
+  end
+
+  return false
+end
+
+
 function sort.find_files(pattern, path)
   if vim.fn.has('win32') == 1 then
     local new = sort.path_join(path, pattern)
     -- https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir
     command = 'dir ' .. new .. ' /b/s/a:-d'
   else
-    command = 'echo ..'
+    command = 'find' .. new .. '-type f -not -path "./.git/*"'
   end
-  return vim.fn.systemlist(command)
+  files = vim.fn.systemlist(command)
 end
 
 function sort.find_files_quickfix(arguments)
@@ -194,9 +247,7 @@ function sort.regex_remove_buffer(pattern)
 end
 
 function sort.float_information(title, entries)
-  -- local entries = {"aaaaa", "bbbb"}
   vim.fn.setqflist({}, "r", {title = title, items = entries})
-  -- Open the quickfix list in a floating window
   vim.lsp.util.open_floating_preview(entries)
 end
 
@@ -222,8 +273,8 @@ function sort.find_files_quickfix_popup(pattern, path)
   sort.popup_search({pattern, path}, sort.find_files_quickfix)
 end
 
-function sort.grep_path_quickfix_popup(pattern, path)
-  sort.popup_search({pattern, path}, sort.grep_path_quickfix)
+function sort.grep_quickfix_popup(pattern, path)
+  sort.popup_search({pattern, path}, sort.grep_quickfix)
 end
 
 function sort.save_buffer(arguments)
