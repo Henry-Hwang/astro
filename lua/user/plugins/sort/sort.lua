@@ -303,6 +303,23 @@ function sort.list_buf_popup()
   -- vim.bo[popup.bufnr].readonly = true
 end
 
+function sort.open_history()
+  local qfix_list = {}
+  local inputString = vim.api.nvim_exec("echo v:oldfiles", true)
+  local patterns = {'toggleterm','neo-tree','filesystem','quickfix'}
+  for item in inputString:gmatch("'(.-)'") do
+    local excluded = false
+    for p in ipairs(patterns) do
+      if string.find(item, p) then excluded = true end
+    end
+    if not excluded then
+      table.insert(qfix_list, {filename=item,})
+    end
+  end
+
+  window.qfix_open(qfix_list)
+end
+
 function sort.most_paths()
   local Menu = require("nui.menu")
   local event = require("nui.utils.autocmd").event

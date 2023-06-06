@@ -30,13 +30,15 @@ return {
       e = {function () sort.open_in_explore(vim.fn.expand("%:h")) end, "Open file location"},
       t = {function () sort.trim_buffer() end, "Trim buffer"},
 	    u = {function () sort.nvim_userdir() end, "Neovim Directory"},
-      f = {function () sort.find_word_top({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}) end, "Find WORD -Top"},
+      g = {function () sort.find_word_top({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}) end, "Find WORD -Top"},
+      f = {function () sort.find_word({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}) end, "Find WORD"},
       F = {function () sort.popup_caller({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}, sort.find_word) end, "Find WORD - Popup"},
       m = {function () sort.find_files_top({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}) end, "Find Files"},
       M = {function () sort.popup_caller({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}, sort.find_files_path) end, "Find Files - Popup"},
       k = {function () sort.find_and_keep(vim.fn.expand("<cword>")) end, "Find and Keep"},
       d = {function () sort.find_and_remove(vim.fn.expand("<cword>")) end, "Find and Remove"},
       s = {function () sort.popup_caller({vim.fn.expand("<cword>"), vim.fn.expand("%:p")}, sort.save_buffer) end, "Save Buffer - Popup"},
+      h = {function () sort.open_history() end, "History open"},
     },
     ["<leader>m" ] = {name = "Mark",
       a = { ":ma a <cr>", desc = "Mark A" },
@@ -60,7 +62,8 @@ return {
     },
     ["<leader>;;"] = {
       function ()
-        local pattern, path = vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")
+        -- local pattern, path = vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")
+        sort.open_history()
       end,
       desc = "Test block"
     },
