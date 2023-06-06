@@ -76,7 +76,7 @@ function buffer.trim()
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
 end
 
-function buffer.regex_lines_to_quickfix_list(pattern)
+function buffer.regex_lines_to_qfix(pattern)
   local qfix_lines = {}
   local bufnr = vim.api.nvim_get_current_buf()
   local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -95,7 +95,7 @@ function buffer.regex_lines_to_quickfix_list(pattern)
   return qfix_lines
 end
 
-function buffer.find_lines_to_quickfix_list(word)
+function buffer.find_lines_to_qfix_list(word)
   local qfix_lines = {}
   local bufnr = vim.api.nvim_get_current_buf()
   local buffer_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)

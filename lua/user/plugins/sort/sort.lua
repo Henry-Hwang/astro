@@ -20,6 +20,11 @@ function sort.path_join(...)
   return path:gsub(separator.."+", separator):gsub(separator.."$", "")
 end
 
+function sort.tcd_popup(arguments)
+  local path = arguments[2]
+	vim.cmd(":tcd " .. path)
+end
+
 function sort.nvim_userdir()
   local userdir = "~/.config/nvim/lua/user"
   if vim.fn.has('win32') == 1 then
@@ -51,7 +56,7 @@ function find_top_dir(path)
   return path
 end
 
-function sort.grep_global_quickfix(arguments)
+function sort.find_word_top(arguments)
   local pattern = arguments[1]
   local path = arguments[2]
   local separator = package.config:sub(1, 1) -- Get the path separator based on the current operating system
@@ -86,17 +91,10 @@ function sort.grep_quickfix(arguments)
   window.qfix_open(qfix_list)
 end
 
-function sort.find_word_quickfix(word)
-  sort.regex_buf_quickfix({word})
-end
-
-function sort.regex_buf_quickfix(arguments)
+function sort.find_word(arguments)
   local pattern = arguments[1]
   if pattern ~= "" then
-    local qfix_list = buffer.regex_lines_to_qfix_list(pattern)
-    -- Set the lines in the quickfix list
-    -- vim.fn.setqflist(qfix_list)
-    -- vim.cmd("copen")
+    local qfix_list = buffer.regex_lines_to_qfix(pattern)
     window.qfix_open(qfix_list)
   end
 end
@@ -128,26 +126,30 @@ function sort.find_files(path)
   local command = 'find ' .. path .. ' -type f -not -path "/*/.git/*"'
   if vim.fn.has('win32') == 1 then
     -- https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir
-    command = 'dir ' .. path .. ' /b/s/a:-d'
+    -- command = 'dir ' .. path .. ' /b/s/a:-h'
+    command = 'dir ' ..path.. '/B /S /A:-H /A:-D /A:-L | findstr /V /I /C:".git" /C:".gitignore"'
   end
 
   return vim.fn.systemlist(command)
 end
 
-function sort.find_files_quickfix(arguments)
+function sort.find_files_top(arguments)
+  local path = arguments[2]
+  path = find_top_dir(path)
+  sort.find_files_path({"", path})
+end
+
+function sort.find_files_path(arguments)
   local _, path = arguments[1], arguments[2]
-  local files = sort.find_files(find_top_dir(path))
+  local files = sort.find_files(path)
   local qfix_list = {}
   for _, file in ipairs(files) do
     table.insert(qfix_list, {filename =strim(file)})
   end
   window.qfix_open(qfix_list)
-  -- vim.fn.setqflist(qfix_list)
-  -- vim.cmd("copen")
-  -- window.set_height()
 end
 
-function sort.regex_keep_buffer(pattern)
+function sort.find_and_keep(pattern)
   local bufnr = vim.api.nvim_get_current_buf()
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local regex = vim.regex(pattern)
@@ -160,7 +162,7 @@ function sort.regex_keep_buffer(pattern)
   buffer.create_with_data(new_lines)
 end
 
-function sort.regex_remove_buffer(pattern)
+function sort.find_and_remove(pattern)
   local bufnr = vim.api.nvim_get_current_buf()
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local regex = vim.regex(pattern)
@@ -178,7 +180,7 @@ function sort.float_information(title, entries)
   vim.lsp.util.open_floating_preview(entries)
 end
 
-function sort.explore(path)
+function sort.open_in_explore(path)
   local command
   if vim.fn.has('win32') == 1 then
     command = 'start ' .. path
@@ -186,34 +188,15 @@ function sort.explore(path)
     command = 'echo ..'
   end
   os.execute(command)
-  vim.api.nvim_echo({{"Explore " ..path, "Title"}}, true, {})
-end
-
--- Function to create a floating window and show file names in current directory
-function sort.find_word_quickfix_popup(pattern, path)
-  sort.popup_search({pattern, path}, sort.regex_buf_quickfix)
-end
-
-function sort.find_files_quickfix_popup(pattern, path)
-  if pattern == "" then pattern = "*.*" end
-  if path == "" then pattern = "." end
-  sort.popup_search({pattern, path}, sort.find_files_quickfix)
-end
-
-function sort.grep_quickfix_popup(pattern, path)
-  sort.popup_search({pattern, path}, sort.grep_quickfix)
+  vim.api.nvim_echo({{"Open in location: " ..path, "Title"}}, true, {})
 end
 
 function sort.save_buffer(arguments)
     filepath = arguments[2]
-    -- Get the current buffer number
     local bufnr = vim.api.nvim_get_current_buf()
-
-    -- Get the buffer contents
     local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-
-    -- Write the buffer contents to a file
     local file = io.open(filepath, "w")
+
     if file then
         for _, line in ipairs(lines) do
             file:write(line .. "\n")
@@ -226,23 +209,24 @@ function sort.save_buffer(arguments)
 end
 
 function sort.save_buffer_popup(pattern, path)
-  sort.popup_search({pattern, path}, sort.save_buffer)
+  sort.popup_caller({pattern, path}, sort.save_buffer)
 end
 
-function sort.popup_search(arguments, callback)
+function sort.popup_caller(arguments, callback)
   local Input = require("nui.input")
   local event = require("nui.utils.autocmd").event
-
+  local default_value = table.concat(arguments, "|")
+  vim.api.nvim_notify("width: " .. #default_value, vim.log.levels.INFO, {})
   local input = Input({
     position = "50%",
-    size = { width = 60, },
+    size = { width = #default_value + 10, },
     border = { 
       style = "single",
       text = { top = "[Search]", top_align = "center",},
     },
     win_options = { winhighlight = "Normal:Normal,FloatBorder:Normal",},
   }, {
-      prompt = "> ", default_value = table.concat(arguments, "|"),
+      prompt = "> ", default_value = default_value,
       on_close = function()
         print("Input Closed!")
       end,
@@ -258,6 +242,10 @@ function sort.popup_search(arguments, callback)
 
   -- mount/open the component
   input:mount()
+
+  input:map("n", "<Esc>", function()
+    input:unmount()
+  end, { noremap = true })
 
   -- unmount component when cursor leaves buffer
   input:on(event.BufLeave, function()
@@ -315,7 +303,7 @@ function sort.list_buf_popup()
   -- vim.bo[popup.bufnr].readonly = true
 end
 
-function sort.menu_default_path()
+function sort.most_paths()
   local Menu = require("nui.menu")
   local event = require("nui.utils.autocmd").event
 
