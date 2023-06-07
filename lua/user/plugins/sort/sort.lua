@@ -56,35 +56,33 @@ function find_top_dir(path)
   return path
 end
 
-function sort.find_word_top(arguments)
-  local pattern = arguments[1]
-  local path = arguments[2]
-  local separator = package.config:sub(1, 1) -- Get the path separator based on the current operating system
+function sort.find_word_path(arguments)
+  sort.grep_quickfix(arguments)
+end
 
-  path = find_top_dir(path)
-  sort.grep_quickfix({pattern, path})
+function sort.find_word_top(arguments)
+  arguments.path = find_top_dir(arguments.path)
+  sort.find_word_path(arguments)
 end
 
 function sort.grep_quickfix(arguments)
-  local pattern = arguments[1]
-  local path = arguments[2]
-
-  if pattern == "" then
+  if arguments.pattern == "" then
       return
   end
-
   vim.fn.setqflist({}, "r")
   local qfix_list = {}
-  local command = string.format("rg --vimgrep --smart-case --no-column %s %s", pattern, path)
+  local command = string.format("rg --vimgrep --smart-case --no-column %s %s", arguments.pattern, arguments.path)
+  if arguments.word then
+    command = string.format("rg --vimgrep --word-regexp --no-column %s %s", arguments.pattern, arguments.path)
+  end
+
   -- vim.api.nvim_notify(command, vim.log.levels.INFO, {})
   local output = vim.fn.system(command)
   local lines = vim.split(output, "\n")
   for _, line in ipairs(lines) do
-    if line ~= "" then
-      local filename, linenumber, text = line:match("^(.-):(%d+):(.+)$")
-      if filename and linenumber and text then
-        table.insert(qfix_list, {filename = filename, lnum = linenumber, text = text})
-      end
+    local filename, linenumber, text = line:match("^(.-):(%d+):(.+)$")
+    if filename and linenumber and text then
+      table.insert(qfix_list, {filename = filename, lnum = linenumber, text = text})
     end
   end
 
@@ -92,9 +90,8 @@ function sort.grep_quickfix(arguments)
 end
 
 function sort.find_word(arguments)
-  local pattern = arguments[1]
-  if pattern ~= "" then
-    local qfix_list = buffer.regex_lines_to_qfix(pattern)
+  if arguments.pattern ~= "" then
+    local qfix_list = buffer.regex_lines_to_qfix(arguments.pattern)
     window.qfix_open(qfix_list)
   end
 end
@@ -123,6 +120,7 @@ end
 
 function sort.find_files(path)
   local new = sort.path_join(path, pattern)
+  vim.api.nvim_notify("path: " .. path, vim.log.levels.INFO, {})
   local command = 'find ' .. path .. ' -type f -not -path "/*/.git/*"'
   if vim.fn.has('win32') == 1 then
     -- https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir
@@ -134,14 +132,13 @@ function sort.find_files(path)
 end
 
 function sort.find_files_top(arguments)
-  local path = arguments[2]
-  path = find_top_dir(path)
-  sort.find_files_path({"", path})
+  arguments.path = find_top_dir(arguments.path)
+  arguments.pattern=""
+  sort.find_files_path(arguments)
 end
 
 function sort.find_files_path(arguments)
-  local _, path = arguments[1], arguments[2]
-  local files = sort.find_files(path)
+  local files = sort.find_files(arguments.path)
   local qfix_list = {}
   for _, file in ipairs(files) do
     table.insert(qfix_list, {filename =strim(file)})
@@ -192,31 +189,25 @@ function sort.open_in_explore(path)
 end
 
 function sort.save_buffer(arguments)
-    filepath = arguments[2]
     local bufnr = vim.api.nvim_get_current_buf()
     local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-    local file = io.open(filepath, "w")
+    local file = io.open(arguments.path, "w")
 
     if file then
         for _, line in ipairs(lines) do
             file:write(line .. "\n")
         end
         file:close()
-        vim.api.nvim_command("edit " .. vim.fn.fnameescape(filepath))
+        vim.api.nvim_command("edit " .. vim.fn.fnameescape(arguments.path))
     else
         print("Error: Unable to save buffer to file.")
     end
 end
 
-function sort.save_buffer_popup(pattern, path)
-  sort.popup_caller({pattern, path}, sort.save_buffer)
-end
-
 function sort.popup_caller(arguments, callback)
   local Input = require("nui.input")
   local event = require("nui.utils.autocmd").event
-  local default_value = table.concat(arguments, "|")
-  vim.api.nvim_notify("width: " .. #default_value, vim.log.levels.INFO, {})
+  local default_value = arguments.pattern .."|".. arguments.path
   local input = Input({
     position = "50%",
     size = { width = #default_value + 10, },
@@ -231,12 +222,11 @@ function sort.popup_caller(arguments, callback)
         print("Input Closed!")
       end,
       on_submit = function(value)
-        local values = {}
+        local l ={}
         for v in string.gmatch(value, "([^|]+)") do
-          table.insert(values, v)
+          table.insert(l, v)
         end
-        -- sort.print({"tag:0002---", values[1], values[2], "tag: end----"})
-        callback(values)
+        callback({pattern=l[1], path=l[2], word=arguments.word})
       end,
     })
 

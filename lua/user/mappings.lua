@@ -30,14 +30,16 @@ return {
       e = {function () sort.open_in_explore(vim.fn.expand("%:h")) end, "Open file location"},
       t = {function () sort.trim_buffer() end, "Trim buffer"},
 	    u = {function () sort.nvim_userdir() end, "Neovim Directory"},
-      g = {function () sort.find_word_top({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}) end, "Find WORD -Top"},
-      f = {function () sort.find_word({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}) end, "Find WORD"},
-      F = {function () sort.popup_caller({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}, sort.find_word) end, "Find WORD - Popup"},
-      m = {function () sort.find_files_top({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}) end, "Find Files"},
-      M = {function () sort.popup_caller({vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")}, sort.find_files_path) end, "Find Files - Popup"},
+      g = {function () sort.find_word_top({pattern=vim.fn.expand("<cword>"), path=vim.fn.expand("%:p:h"), word=true}) end, "Find WORD -Top"},
+      G = {function () sort.find_word_top({pattern=vim.fn.expand("<cword>"), path=vim.fn.expand("%:p:h"), word=false}) end, "Find WORD Ex-Top"},
+      f = {function () sort.find_word({pattern=vim.fn.expand("<cword>"), path=vim.fn.expand("%:p:h"), word=true}) end, "Find WORD"},
+      s = {function () sort.popup_caller({pattern=vim.fn.expand("<cword>"), path=vim.fn.expand("%:p:h"), word=true}, sort.find_word_path) end, "Find WORD - Path"},
+      S = {function () sort.popup_caller({pattern=vim.fn.expand("<cword>"), path=vim.fn.expand("%:p:h"), word=false}, sort.find_word_path) end, "Find WORD - Path"},
+      m = {function () sort.find_files_top({pattern=vim.fn.expand("<cword>"), path=vim.fn.expand("%:p:h"), word=true}) end, "Find Files"},
+      M = {function () sort.popup_caller({pattern=vim.fn.expand("<cword>"), path=vim.fn.expand("%:p:h"), word=true}, sort.find_files_path) end, "Find Files - Popup"},
       k = {function () sort.find_and_keep(vim.fn.expand("<cword>")) end, "Find and Keep"},
       d = {function () sort.find_and_remove(vim.fn.expand("<cword>")) end, "Find and Remove"},
-      s = {function () sort.popup_caller({vim.fn.expand("<cword>"), vim.fn.expand("%:p")}, sort.save_buffer) end, "Save Buffer - Popup"},
+      w = {function () sort.popup_caller({pattern="", path=vim.fn.expand("%:p"), word=true}, sort.save_buffer) end, "Save Buffer - Popup"},
       h = {function () sort.open_history() end, "History open"},
     },
     ["<leader>m" ] = {name = "Mark",
@@ -62,8 +64,8 @@ return {
     },
     ["<leader>;;"] = {
       function ()
-        -- local pattern, path = vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")
-        sort.open_history()
+        local pattern, path = vim.fn.expand("<cword>"), vim.fn.expand("%:p:h")
+        sort.float_information("File Information", {path})
       end,
       desc = "Test block"
     },
